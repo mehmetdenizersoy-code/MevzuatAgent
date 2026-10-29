@@ -92,6 +92,16 @@ def _render_markdown(result: dict) -> str:
                     "",
                 ]
             )
+            legal_evidence = finding.get("mevzuat_evidence")
+            if legal_evidence:
+                lines.extend(
+                    [
+                        "**Mevzuat metni:**",
+                        "",
+                        f"> {_md(str(legal_evidence))}",
+                        "",
+                    ]
+                )
     else:
         lines.extend(
             [
@@ -125,6 +135,12 @@ def _render_markdown(result: dict) -> str:
 def _render_html(result: dict) -> str:
     findings_html = []
     for finding in result["findings"]:
+        legal_evidence_html = (
+            f"<blockquote><strong>Mevzuat metni:</strong> "
+            f"{_html(finding['mevzuat_evidence'])}</blockquote>"
+            if finding.get("mevzuat_evidence")
+            else ""
+        )
         findings_html.append(
             "<article class=\"finding\">"
             f"<h3>{_html(finding.get('severity', 'Bilinmiyor'))}: "
@@ -134,6 +150,7 @@ def _render_html(result: dict) -> str:
             f"<strong>Güven:</strong> {_html(finding.get('confidence', '?'))}/10</p>"
             f"<p><strong>Mevzuat:</strong> {_html(finding.get('mevzuat_source', ''))}, "
             f"sayfa {_html(finding.get('mevzuat_page', '?'))}</p>"
+            f"{legal_evidence_html}"
             f"<p>{_html(finding.get('explanation', ''))}</p>"
             f"<p><strong>Öneri:</strong> {_html(finding.get('recommendation', ''))}</p>"
             f"<pre><code>{_html(finding.get('evidence', ''))}</code></pre>"

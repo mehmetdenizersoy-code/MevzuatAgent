@@ -37,6 +37,7 @@ from mevzuat_agent.tools.scan_repository import (
     RepositoryScanResult,
     ScannedFile,
     ScanFinding,
+    _expand_retrieval_query,
     scan_repository,
     validate_scan_findings,
 )
@@ -626,6 +627,7 @@ def test_scan_finding_is_accepted_only_with_code_and_mevzuat_evidence():
                 "explanation": "Potential card data exposure.",
                 "mevzuat_source": "law.pdf",
                 "mevzuat_page": 4,
+                "mevzuat_evidence": "Card data protection",
                 "recommendation": "Review card data handling.",
                 "confidence": 8,
             }
@@ -643,6 +645,7 @@ def test_scan_finding_is_accepted_only_with_code_and_mevzuat_evidence():
     assert len(findings) == 1
     assert findings[0].file == "Payments.cs"
     assert findings[0].line == 2
+    assert findings[0].mevzuat_evidence == "Card data protection"
 
 
 def test_scan_finding_rejects_unverified_code_quote():
@@ -669,6 +672,43 @@ def test_scan_finding_rejects_unverified_code_quote():
             "class Payments {}",
             [{"source": "law.pdf", "page": 4, "text": "Relevant law"}],
         )
+
+
+def test_scan_finding_rejects_unverified_mevzuat_quote():
+    response = {
+        "findings": [
+            {
+                "severity": "HIGH",
+                "title": "Unsupported citation",
+                "line": 2,
+                "evidence": "var card = value;",
+                "explanation": "Claim without legal text proof.",
+                "mevzuat_source": "law.pdf",
+                "mevzuat_page": 4,
+                "mevzuat_evidence": "The law requires encryption.",
+                "recommendation": "Review.",
+                "confidence": 9,
+            }
+        ]
+    }
+
+    with pytest.raises(ValueError, match="mevzuat evidence does not match"):
+        validate_scan_findings(
+            response,
+            "Payments.cs",
+            "class Payments {\nvar card = value;\n}",
+            [{"source": "law.pdf", "page": 4, "text": "Card data protection"}],
+        )
+
+
+def test_english_payment_terms_expand_for_turkish_mevzuat_search():
+    query = _expand_retrieval_query(
+        "publish_cardholder_data_without_consent merchant export"
+    )
+
+    assert "kart hamili" in query
+    assert "üye işyeri" in query
+    assert "yazılı rıza" in query
 
 
 def test_scan_repository_limits_files_and_persists_result(tmp_path):
@@ -711,6 +751,73 @@ def test_scan_repository_limits_files_and_persists_result(tmp_path):
     assert result.model == "llama3.2:1b"
     assert output_path.is_file()
     ask.assert_called_once()
+
+
+def test_scan_repository_retrieves_turkish_law_for_english_code(tmp_path):
+    repository = tmp_path / "merchant"
+    repository.mkdir()
+    source_code = (
+        "def export_merchant_cardholder_data_without_consent(cardholder_data, vendor):\n"
+        "    vendor.publish(cardholder_data)\n"
+    )
+    (repository / "export.py").write_text(source_code, encoding="utf-8")
+    index_path = tmp_path / "chunks.jsonl"
+    legal_quote = (
+        "Üye işyerleri kart hamili bilgilerini kart hamilinin yazılı rızasını "
+        "almadan başkasına açıklayamaz."
+    )
+    index_path.write_text(
+        json.dumps(
+            {
+                "source": "regulation.pdf",
+                "page": 7,
+                "text": legal_quote,
+                "start_index": 0,
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    model_response = {
+        "findings": [
+            {
+                "severity": "HIGH",
+                "title": "Kart hamili verisi rıza olmadan paylaşılıyor",
+                "line": 2,
+                "evidence": "    vendor.publish(cardholder_data)",
+                "explanation": "Kod, kart hamili verisini harici sağlayıcıya gönderiyor.",
+                "mevzuat_source": "regulation.pdf",
+                "mevzuat_page": 7,
+                "mevzuat_evidence": legal_quote,
+                "recommendation": "Yazılı rıza olmadan veriyi paylaşmayın.",
+                "confidence": 8,
+            }
+        ]
+    }
+    git_outputs = iter(("main", "abc123", "export.py\0"))
+
+    with (
+        patch(
+            "mevzuat_agent.tools.scan_repository.run_git_command",
+            side_effect=lambda *args: next(git_outputs),
+        ),
+        patch(
+            "mevzuat_agent.tools.scan_repository._ask_ollama",
+            return_value=json.dumps(model_response, ensure_ascii=False),
+        ) as ask,
+    ):
+        result = scan_repository(
+            repository,
+            max_files=1,
+            rag_index_path=index_path,
+            output_path=tmp_path / "scan.json",
+        )
+
+    assert result.files_scanned == 1
+    assert len(result.findings) == 1
+    assert result.findings[0].mevzuat_evidence == legal_quote
+    assert ask.call_args.args[1][0]["text"] == legal_quote
 
 
 def test_generate_scan_report_creates_markdown_and_escaped_html(tmp_path):

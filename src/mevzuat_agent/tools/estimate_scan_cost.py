@@ -16,6 +16,7 @@ from mevzuat_agent.tools.build_mevzuat_rag import search_mevzuat_rag
 DEFAULT_MODEL = "llama3.2:1b"
 DEFAULT_RAG_INDEX = Path("data/legislation/rag/chunks.jsonl")
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
+SCAN_OUTPUT_TOKENS_PER_FILE = 700
 SOURCE_EXTENSIONS = frozenset(
     {
         ".c",
@@ -251,7 +252,7 @@ def estimate_scan_cost(
         tokens_per_second: int = 10,
         top_k: int = 3,
         prompt_overhead_tokens_per_file: int = 500,
-        output_tokens_per_file: int = 250,
+        output_tokens_per_file: int = SCAN_OUTPUT_TOKENS_PER_FILE,
         max_file_bytes: int = 1_000_000,
         max_files: int | None = None,
 ) -> ScanCostEstimate:

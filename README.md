@@ -316,9 +316,9 @@ yerel bare remote ve mock `gh` ile doğrulanmış, gerçek GitHub PR'ı açılma
 
 **Ekran görüntüleri (sentetik E2E örnekleri):**
 
-![Sentetik uçtan uca tarama HTML raporu](docs/assets/e2e_reports/scan_report_preview.png)
+uçtan uca tarama HTML raporu](docs/assets/e2e_reports/scan_report_preview.png)
 
-![Sentetik remediation HTML raporu ve kod farkı](docs/assets/e2e_reports/remediation_report_preview.png)
+remediation HTML raporu ve kod farkı](docs/assets/e2e_reports/remediation_report_preview.png)
 
 Adım adım terminal kanıtları [`docs/assets/e2e_terminal/`](docs/assets/e2e_terminal/)
 dizinindedir. Bu ekran görüntüleri sentetik test verisini gösterir; canlı model

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "final-proje-mevzuatagent"
+version = "0.1.0"
+description = "MevzuatAgent Python projesi"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "langchain-core>=0.3.60",
+    "langchain-text-splitters>=0.3.8",
+    "pypdf>=5.4.0",
+    "rank-bm25>=0.2.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "python-pptx>=1.0"]
+
+[project.scripts]
+mevzuat-agent = "mevzuat_agent:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mevzuat_agent = ["prompts/*.md"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

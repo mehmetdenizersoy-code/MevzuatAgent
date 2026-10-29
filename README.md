@@ -11,14 +11,6 @@ altyapısına bağlanmaz; yalnızca onaylanan kod ve belge kapsamını analiz ed
 İndirme, mevzuat arama, tarama tahmini, bulgu raporlama ve kontrollü düzeltme
 adımları ayrı ve kullanıcı onayına bağlıdır.
 
-> **Önemli:** MevzuatAgent hukuk danışmanı değildir. Model çıktıları hukuki
-> görüş veya kesin mevzuat uyumluluğu kararı olarak değerlendirilmemelidir.
-> Her bulgu ilgili kaynak ve uzman tarafından doğrulanmalıdır. Test deposundaki
-> `demo1` ve `demo2` örnekleri yalnızca sentetik test verisidir; gerçek mevzuat
-> ihlali iddiası taşımaz.
->
-> Softtech logosu yalnızca görsel kimlik amacıyla kullanılmıştır; bu proje
-> Softtech tarafından destekleniyor veya resmen onaylanıyor anlamına gelmez.
 
 ## İçindekiler
 

@@ -21,6 +21,7 @@ adımları ayrı ve kullanıcı onayına bağlıdır.
 - [Kurulum](#kurulum)
 - [Hızlı yerel test](#hızlı-yerel-test)
 - [İlk çalıştırma](#ilk-çalıştırma)
+- [Ödev rubriğiyle eşleşme](#ödev-rubriğiyle-eşleşme)
 - [Ödev sunumu](#ödev-sunumu)
 - [Yapılandırma dosyaları](#yapılandırma-dosyaları)
 - [Belgeleri indirme ve RAG indeksi oluşturma](#belgeleri-indirme-ve-rag-indeksi-oluşturma)
@@ -282,17 +283,46 @@ GitHub PR için birbirinden ayrı onaylar ister. PR aşaması gerçek commit ve
 push yapar; bunu yalnızca doğru Git deposunu seçtiğinizden emin olduktan sonra
 onaylayın.
 
+## Ödev rubriğiyle eşleşme
+
+Bootcamp kapanış projesi beş eşit ağırlıklı ölçütle değerlendirilir. Aşağıdaki
+eşleme, uygulamanın gösterdiği kanıtları ve sınırlarını birlikte açıklar.
+
+| Ölçüt (%20) | Projedeki karşılığı ve kanıt |
+|---|---|
+| Problem tanımı ve gerçek dünya uygunluğu | Kartlı ödeme yazılımlarında maskeleme, tutar ve idempotency gibi gerçekçi kontroller için mevzuat destekli ön inceleme. Çıktı uzman kararı veya uygunluk sertifikası değildir. |
+| Agentic mimari ve eğitim yaklaşımları | Yerel Ollama, BM25 tabanlı mevzuat RAG'i, Python araçları ve çok adımlı LangChain `Runnable` akışı. Depo, tarama, düzeltme, test ve PR farklı araç/izin adımlarıdır; tek bir LLM çağrısı yerine denetlenebilir orkestrasyon gerekir. Kalıcı hafıza, otonom planlayıcı ve çoklu agent yoktur. |
+| İşlevsellik ve çıktı kalitesi | Kurulum, tarama ve rapor akışları ile 56 otomatik test gösterilir. Canlı model denemesi bir dosyada doğrulanmış bulgu üretmedi; pozitif bulgular ve remediation kanıtları sentetik E2E fixture'larına aittir. |
+| Kod kalitesi ve teknik uygulama | Modüler Python araçları, ayrı iş akışı ve testler; yerel Ollama kullanımı bulut LLM API anahtarı gerektirmez. |
+| Dokümantasyon ve teslim | README'de proje amacı, teknoloji, kurulum ve çalıştırma adımları; sunumda terminal ve rapor ekran görüntüleri bulunur. |
+
 ## Ödev sunumu
 
-24 slaytlık Türkçe sunum; sohbet başlangıcından mevzuat seçimi, RAG, depo,
-tahmin/tarama, raporlar, remediation diff'i, test ve PR onayına kadar uçtan uca
-akışı kapsar. İçindeki kod farkı sentetik E2E fixture'ıdır; PR provası yerel
-bare remote ve mock `gh` ile yapılmıştır, gerçek GitHub PR'ı açılmamıştır.
+28 slaytlık Türkçe sunum; problem tanımını, mimariyi, kurulum ve kullanım
+adımlarını, terminal çıktıları ile tarama/remediation rapor görsellerini ve
+rubrik eşlemesini içerir. Canlı Gemma taramasında bir dosya incelenmiş,
+doğrulanmış bulgu üretilmemiştir; sentetik bulgular, remediation testi ve PR
+provası ayrı test E2E'sidir. Sentetik kod farkı hukukî tespit değildir; PR yanıtı
+yerel bare remote ve mock `gh` ile doğrulanmış, gerçek GitHub PR'ı açılmamıştır.
 
 - [MevzuatAgent_Odev_Sunumu_TR.pptx](docs/MevzuatAgent_Odev_Sunumu_TR.pptx)
 - Kaynak üretici: `scripts/create_presentation.py`
-- Yeniden üretmek için: `.venv/bin/python scripts/create_presentation.py`
+- Terminal görselleri: `docs/assets/e2e_terminal/`
+- Görselleri üretmek için: `.venv/bin/python scripts/create_terminal_evidence.py`
+- HTML rapor görselleri: `docs/assets/e2e_reports/`
+- Rapor görsellerini üretmek için: `.venv/bin/python scripts/create_report_previews.py`
+- Sunumu üretmek için: `.venv/bin/python scripts/create_presentation.py`
 - [Uçtan uca tarama raporu](docs/examples/e2e_tarama_raporu.md)
+
+**Ekran görüntüleri (sentetik E2E örnekleri):**
+
+![Sentetik uçtan uca tarama HTML raporu](docs/assets/e2e_reports/scan_report_preview.png)
+
+![Sentetik remediation HTML raporu ve kod farkı](docs/assets/e2e_reports/remediation_report_preview.png)
+
+Adım adım terminal kanıtları [`docs/assets/e2e_terminal/`](docs/assets/e2e_terminal/)
+dizinindedir. Bu ekran görüntüleri sentetik test verisini gösterir; canlı model
+bulgusu veya gerçek mevzuat ihlali değildir.
 - [Remediation kod farkı](docs/examples/e2e_remediation_raporu.md)
 - [Test ve PR provasının doğrulama özeti](docs/examples/e2e_dogrulama_ozeti.md)
 

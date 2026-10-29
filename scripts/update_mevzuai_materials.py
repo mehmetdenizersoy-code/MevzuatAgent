@@ -3,6 +3,7 @@
 from html import escape
 from pathlib import Path
 
+from PIL import Image, ImageDraw, ImageFont
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.text import MSO_ANCHOR
@@ -18,6 +19,7 @@ SOURCE_REPORTS = (
 OUTPUT_PRESENTATION = ROOT / "docs/MevzuAI_Sunum_Guncel.pptx"
 OUTPUT_MARKDOWN = ROOT / "docs/MevzuAI_Birlesik_Risk_ve_Remediation_Ozeti.md"
 OUTPUT_HTML = ROOT / "docs/MevzuAI_Birlesik_Risk_ve_Remediation_Ozeti.html"
+ASSETS_DIR = ROOT / "docs/assets/mevuai_evidence"
 
 NAVY = RGBColor(17, 34, 64)
 NAVY_LIGHT = RGBColor(29, 54, 91)
@@ -31,6 +33,17 @@ PAPER = RGBColor(247, 249, 252)
 WHITE = RGBColor(255, 255, 255)
 PALE_BLUE = RGBColor(231, 240, 250)
 PALE_GOLD = RGBColor(255, 246, 223)
+
+CAPTURE_WIDTH = 1800
+CAPTURE_HEIGHT = 740
+CAPTURE_BG = "#101827"
+CAPTURE_PANEL = "#182437"
+CAPTURE_MUTED = "#9aabc1"
+CAPTURE_WHITE = "#eef4fb"
+CAPTURE_GREEN = "#71d7a1"
+CAPTURE_RED = "#ff8989"
+CAPTURE_CYAN = "#71d8e6"
+CAPTURE_GOLD = "#ffd37a"
 
 
 FINDINGS = [
@@ -228,6 +241,128 @@ remediation_farklari_top5_tur2_20261024_2000.html.</p>
 </main></body></html>"""
 
 
+def _capture_font(size: int, bold: bool = False):
+    font_path = (
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+        if bold
+        else "/System/Library/Fonts/Supplemental/Arial.ttf"
+    )
+    try:
+        return ImageFont.truetype(font_path, size)
+    except OSError:
+        return ImageFont.load_default(size=size)
+
+
+def _create_capture(
+    filename: str,
+    title: str,
+    subtitle: str,
+    lines: list[tuple[str, str]],
+    footer: str,
+) -> Path:
+    ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+    output = ASSETS_DIR / filename
+    image = Image.new("RGB", (CAPTURE_WIDTH, CAPTURE_HEIGHT), CAPTURE_BG)
+    draw = ImageDraw.Draw(image)
+    draw.rounded_rectangle(
+        (24, 20, CAPTURE_WIDTH - 24, CAPTURE_HEIGHT - 20),
+        radius=22,
+        fill=CAPTURE_PANEL,
+        outline="#35445a",
+        width=2,
+    )
+    for x, color in ((54, "#ff6b6b"), (88, "#ffc857"), (122, "#5bd49b")):
+        draw.ellipse((x, 43, x + 17, 60), fill=color)
+
+    draw.text((168, 37), "MEVZUATAGENT · KANIT GÖRSELİ", font=_capture_font(22, True), fill=CAPTURE_MUTED)
+    draw.text((60, 100), title, font=_capture_font(36, True), fill=CAPTURE_WHITE)
+    draw.text((62, 153), subtitle, font=_capture_font(22), fill=CAPTURE_CYAN)
+
+    y = 214
+    for text, color in lines:
+        draw.text((68, y), text, font=_capture_font(22), fill=color)
+        y += 38
+    draw.line((58, CAPTURE_HEIGHT - 86, CAPTURE_WIDTH - 58, CAPTURE_HEIGHT - 86), fill="#35445a", width=2)
+    draw.text(
+        (62, CAPTURE_HEIGHT - 70),
+        footer,
+        font=_capture_font(17),
+        fill=CAPTURE_GOLD,
+    )
+    image.save(output, optimize=True)
+    return output
+
+
+def _create_evidence_captures() -> dict[str, Path]:
+    captures = {
+        "setup": _create_capture(
+            "kurulum_asamalari.png",
+            "macOS kurulum akışı",
+            "Görsel, install.sh içindeki gerçek adım sırasından oluşturulmuştur",
+            [
+                ("$ ./install.sh", CAPTURE_GREEN),
+                ("01  macOS, Git ve Python 3.10+ ön koşullarını denetle", CAPTURE_WHITE),
+                ("02  .venv sanal ortamını oluştur; bağımlılıkları yükle", CAPTURE_WHITE),
+                ("03  JSON yapılandırmasını ve çalışma klasörlerini doğrula", CAPTURE_WHITE),
+                ("04  Ollama / model kurulumu için ayrı kullanıcı onayı al", CAPTURE_WHITE),
+                ("05  Mevzuatı indirip yerel BM25 indeksi oluşturmayı sor", CAPTURE_WHITE),
+                ("06  repo_link.json depolarını klonlamak için onay iste", CAPTURE_WHITE),
+                ("07  Uygulama ve pytest komutlarını göster", CAPTURE_WHITE),
+            ],
+            "KAYNAK: install.sh · Şematik ekran görselidir; gerçek kurulum oturumu kaydı değildir.",
+        ),
+        "repository": _create_capture(
+            "sentetik_test_deposu.png",
+            "Sentetik test deposu",
+            "Git'te izlenen gerçek fixture yapısı · main @ a14df30",
+            [
+                ("mevzuatagent-test-fixtures/", CAPTURE_CYAN),
+                ("├── README.md", CAPTURE_WHITE),
+                ("├── demo1/  payment_rules.py · scan_result.json · remediation_plan.md", CAPTURE_WHITE),
+                ("│   └── scan_result.md / scan_result.html", CAPTURE_WHITE),
+                ("└── demo2/  payment_rules.py · scan_result.json · remediation_plan.md", CAPTURE_WHITE),
+                ("    └── scan_result.md / scan_result.html", CAPTURE_WHITE),
+                ("2 demo · toplam 10 sentetik bulgu · TEST_FIXTURE_NOT_LAW", CAPTURE_GOLD),
+                ("YALNIZCA TEST İÇİNDİR — gerçek mevzuat tespiti değildir.", CAPTURE_RED),
+            ],
+            "KAYNAK: data/test_repositories/mevzuatagent-test-fixtures · Git ls-files / README",
+        ),
+        "diff": _create_capture(
+            "remediation_diff_ve_test.png",
+            "Remediation diff ve kabul testi",
+            "Gerçek fixture raporundan alınan örnek değişiklikler · test: 2 passed",
+            [
+                ("demo1/payment_rules.py", CAPTURE_CYAN),
+                ("-    return value", CAPTURE_RED),
+                ("+    return '*' * max(0, len(value) - visible) + value[-visible:]", CAPTURE_GREEN),
+                ("-    return amount >= 0", CAPTURE_RED),
+                ("+    return amount > 0", CAPTURE_GREEN),
+                ("$ python -m pytest -q", CAPTURE_MUTED),
+                ("..                                                                       [100%]", CAPTURE_GREEN),
+                ("2 passed · fixture kabul testleri · yalnız test amaçlı", CAPTURE_GOLD),
+            ],
+            "KAYNAK: data/e2e/reports/remediation + data/e2e/reports/tests",
+        ),
+        "pr": _create_capture(
+            "pr_akisi_yerel_prova.png",
+            "PR akışı — yerel prova",
+            "GitHub ekranı değildir · gerçek PR oluşturulmamıştır",
+            [
+                ("$ git --git-dir=data/e2e/pr-origin.git branch -a", CAPTURE_MUTED),
+                ("  main", CAPTURE_WHITE),
+                ("* mevzuatagent/remediation-c4b060c129", CAPTURE_CYAN),
+                ("$ gh pr create  # fake-bin/gh test ikilisi", CAPTURE_MUTED),
+                ("PR CLI çağrısı yerel test stub'ına yönlendirildi", CAPTURE_WHITE),
+                ("Yerel bare remote / sahte gh ile entegrasyon provası", CAPTURE_GREEN),
+                ("Gerçek GitHub PR: OLUŞTURULMADI", CAPTURE_RED),
+                ("Fixture testidir; GitHub'da PR numarası/URL'si yoktur.", CAPTURE_GOLD),
+            ],
+            "KAYNAK: data/e2e/pr-origin.git + data/e2e/fake-bin/gh · canlı GitHub işlemi yok",
+        ),
+    }
+    return captures
+
+
 def _set_shape_text(shape, text: str, size: int, color: RGBColor, bold: bool = False):
     frame = shape.text_frame
     frame.clear()
@@ -423,6 +558,58 @@ def _add_report_slides(presentation):
     )
 
 
+def _add_evidence_slides(presentation, captures: dict[str, Path]):
+    slides = [
+        (
+            "KURULUM · AŞAMA GÖRSELİ",
+            "Kurulum aşamaları ve açık onay kapıları",
+            "install.sh kaynak kodundan sıralandı; bu makinede yapılmış bir kurulum kaydı olarak sunulmaz.",
+            "setup",
+            "Görsel belge akışını anlatır; Ollama, model, mevzuat indirme ve klonlama adımları ayrıca onay ister.",
+        ),
+        (
+            "TEST REPOSU · GERÇEK DOSYA YAPISI",
+            "İki sentetik demo, on test bulgusu",
+            "Depo ağacı mevcut test fixture Git deposundan; içerik yalnızca test için hazırlanmıştır.",
+            "repository",
+            "Sentetik fixture; gerçek sistem veya gerçek mevzuat bulgusu değildir.",
+        ),
+        (
+            "REMEDIATION · DIFF + TEST",
+            "Önce / sonra farkı ve kabul testi",
+            "Görsel, izole remediation worktree raporundaki iki örnek değişikliği ve test raporunu gösterir.",
+            "diff",
+            "Test raporunda 2 sentetik kabul testi geçti; hukuki uyumluluk doğrulaması değildir.",
+        ),
+        (
+            "PR · YEREL ENTEGRASYON PROVASI",
+            "Push/PR hattı güvenli test ortamında denendi",
+            "Yerel bare Git remote ve fake gh kullanıldı; gerçek GitHub PR açılmadı.",
+            "pr",
+            "Gerçek PR ekran görüntüsü mevcut değildir; bu görsel yerel mock provayı açıkça etiketler.",
+        ),
+    ]
+    for eyebrow, title, subtitle, key, note in slides:
+        slide = _new_slide(presentation, eyebrow, title, subtitle)
+        slide.shapes.add_picture(
+            str(captures[key]),
+            Inches(0.68),
+            Inches(1.82),
+            width=Inches(12.0),
+            height=Inches(4.93),
+        )
+        _add_text(
+            slide,
+            note,
+            0.75,
+            6.85,
+            12.0,
+            0.28,
+            9,
+            MUTED,
+        )
+
+
 def main():
     missing_sources = [
         path for path in (SOURCE_PRESENTATION, *SOURCE_REPORTS) if not path.is_file()
@@ -434,6 +621,8 @@ def main():
         )
     presentation = Presentation(str(SOURCE_PRESENTATION))
     _add_report_slides(presentation)
+    captures = _create_evidence_captures()
+    _add_evidence_slides(presentation, captures)
     OUTPUT_PRESENTATION.parent.mkdir(parents=True, exist_ok=True)
     presentation.save(str(OUTPUT_PRESENTATION))
 

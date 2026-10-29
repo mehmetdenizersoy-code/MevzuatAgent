@@ -232,12 +232,16 @@ Sağlanan `MevzuAI_Sunum.pptx` ve 24.10.2026 tarihli iki HTML raporunun
 - [Güncel MevzuAI sunumu](docs/MevzuAI_Sunum_Guncel.pptx)
 - [Birleşik risk ve remediation özeti — HTML](docs/MevzuAI_Birlesik_Risk_ve_Remediation_Ozeti.html)
 - [Birleşik risk ve remediation özeti — Markdown](docs/MevzuAI_Birlesik_Risk_ve_Remediation_Ozeti.md)
+- [Kurulum, test deposu, diff ve PR prova görselleri](docs/assets/mevuai_evidence/)
 
 Tekrar üretmek için üç kaynak dosyayı `data/temp_reference/` klasörüne koyup
 `.venv/bin/python scripts/update_mevzuai_materials.py` çalıştırın. Kaynak
 klasör `data/` altında olduğundan Git'e eklenmez; üretilen sunum ve özetler
-`docs/` altında kalır. Güvenli paylaşım için kaynak raporlardaki credential ve
-token örnekleri yeni çıktılara aktarılmaz. Özet, kaynak raporların beyanlarını
+`docs/` altında kalır. Sunumdaki kurulum görseli `install.sh` akışının şematik
+gösterimidir; test deposu/diff/test görselleri yerel fixture kayıtlarından
+üretilmiştir. PR görseli yalnızca yerel mock provayı gösterir; gerçek GitHub
+PR'ı değildir. Güvenli paylaşım için kaynak raporlardaki credential ve token
+örnekleri yeni çıktılara aktarılmaz. Özet, kaynak raporların beyanlarını
 düzenler; bağımsız yeniden tarama veya test sonucu değildir.
 
 ## Yapılandırma dosyaları

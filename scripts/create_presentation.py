@@ -356,7 +356,7 @@ def _testing_slides(presentation):
     _text(slide, "13 uyarı: bağımlılık deprecation uyarıları", 1.02, 3.83, 2.9, 0.36, size=9, color=RGBColor(213, 225, 238), align=PP_ALIGN.CENTER)
     _card(slide, 4.5, 2.0, 3.78, 2.55, "Kapsanan alanlar", ["JSON ve RAG hazırlama", "Model tahmini/onay akışı", "Kanıt ve rapor üretimi", "Remediation, test ve PR"], TEAL)
     _card(slide, 8.62, 2.0, 3.78, 2.55, "Test yaklaşımı", ["Onaysız adımların reddi", "İzole geçici Git depoları", "Sahte GitHub yanıtları", "Sabit test araçları ve timeout"], CYAN)
-    _text(slide, "Bu sonuç sunum üretiminden önceki test çalıştırmasına aittir; son düzenleme sonrası tekrar doğrulanacaktır.", 0.95, 5.0, 11.2, 0.42, size=11, color=MUTED, align=PP_ALIGN.CENTER)
+    _text(slide, "Bu 44 test yazılım davranışını doğrular; gerçek model çıktısı ve sentetik düzeltme kabul testleri ayrıca sınanmıştır.", 0.95, 5.0, 11.2, 0.42, size=11, color=MUTED, align=PP_ALIGN.CENTER)
     _footer(slide, 14)
 
     slide = _new_slide(presentation)
@@ -370,6 +370,68 @@ def _testing_slides(presentation):
     _text(slide, "Test fixture deposu GitHub'da özeldir. Sentetik kodu üretim sistemlerinde kullanmayın.", 1.08, 4.94, 11.1, 0.4, size=14, color=NAVY, bold=True, align=PP_ALIGN.CENTER)
     _footer(slide, 15)
 
+    slide = _new_slide(presentation)
+    _header(slide, "15  •  Gerçek uçtan uca deneme", "Model havuzu test edildi; yanıt kalitesi değişti", "2026-10-29: resmî bağlantılardaki PDF'ler indirildi, yerel BM25 indeksi kuruldu ve özel sentetik demo deposu klonlandı.")
+    _card(
+        slide,
+        0.78,
+        2.02,
+        3.72,
+        2.58,
+        "Girdi ve hazırlık",
+        [
+            "2 mevzuat PDF'i indirildi",
+            "146 RAG parçası üretildi",
+            "Test deposu klonlandı",
+            "2 kaynak dosyası • 6 eşleşen parça",
+        ],
+        TEAL,
+    )
+    _card(
+        slide,
+        4.8,
+        2.02,
+        3.72,
+        2.58,
+        "Hızlı modeller",
+        [
+            "llama3.2:1b · 65,60 token/sn · ~55 sn",
+            "2 dosyada JSON yanıtı bozuk",
+            "qwen3:4b · 28,25 token/sn · ~128 sn",
+            "2 dosyada boş yanıt",
+        ],
+        CYAN,
+    )
+    _card(
+        slide,
+        8.82,
+        2.02,
+        3.72,
+        2.58,
+        "Gemma sonucu",
+        [
+            "gemma3:4b · 25,31 token/sn · ~143 sn",
+            "2/2 dosya tarandı",
+            "1 adet LOW bulgu üretildi",
+            "Atıf/kanıt var; açıklama spekülatif",
+        ],
+        GOLD,
+    )
+    _box(slide, 0.78, 4.92, 11.76, 0.98, GOLD_PALE)
+    _text(slide, "Önemli: hız tahmini çıktı kalitesini ölçmüyor. Gemma bulgusu uzman doğrulaması gerektiriyor; hızlı modellerin hatalı/boş çıktısı tarama raporlarında görünür.", 1.03, 5.1, 11.23, 0.58, size=12, color=NAVY, bold=True, align=PP_ALIGN.CENTER)
+    _footer(slide, 16)
+
+    slide = _new_slide(presentation)
+    _header(slide, "16  •  Remediation kabul denemesi", "İlk iki sentetik bulgu, izole dalda test edildi", "Model taramasının bulguları tutarsız olduğundan düzeltme hattı önceden etiketlenmiş sentetik fixture bulgularıyla ayrıca sınandı.")
+    _step(slide, 0.82, 2.05, 3.72, "1", "Önce başarısız", "Yeni kabul testleri iki bilinen hatayı yakaladı.", RED)
+    _step(slide, 4.82, 2.05, 3.72, "2", "Öneri ve diff", "Model maskenin yanlış tarafını önerdi; incelemede düzeltildi ve worktree'ye uygulandı.", CYAN)
+    _step(slide, 8.82, 2.05, 3.72, "3", "Test ve PR provası", "2 kabul testi geçti; push yerel bare remote'a, gh yanıtı taklitçiye yöneldi.", TEAL)
+    _box(slide, 0.82, 4.02, 11.72, 1.18, BLUE_PALE)
+    _text(slide, "Dış GitHub etkisi yok", 1.12, 4.24, 2.5, 0.34, size=15, color=NAVY, bold=True)
+    _text(slide, "Gerçek PR açılmadı. Akışın commit/push/PR bağlantısı adımları gerçek fixture Git geçmişi ve yerel sahte GitHub CLI ile sınandı.", 3.72, 4.17, 8.35, 0.58, size=13, color=INK)
+    _text(slide, "Test verisi `TEST_FIXTURE_NOT_LAW` olarak işaretlidir; düzeltmeler hukuki uyumluluk kanıtı değildir.", 1.12, 5.54, 11.0, 0.38, size=12, color=MUTED, align=PP_ALIGN.CENTER)
+    _footer(slide, 17)
+
 
 def _scope_and_conclusion(presentation):
     slide = _new_slide(presentation)
@@ -378,7 +440,7 @@ def _scope_and_conclusion(presentation):
     _card(slide, 6.75, 2.0, 5.7, 2.2, "Kullanım sorumluluğu", ["İndirilen kaynağın güncelliğini denetleyin", "Yalnız güvendiğiniz projelerde test çalıştırın", "Model bulgusunu hukuk uzmanına doğrulatın", "Gerçek depoda yedek ve temiz çalışma alanı kullanın"], GOLD)
     _box(slide, 0.78, 4.68, 11.67, 0.98, GOLD_PALE)
     _text(slide, "Otomasyon kanıtı düzenler; hukuki görüş, kesin uygunluk kararı veya güvenlik sertifikası vermez.", 1.02, 4.92, 11.15, 0.44, size=14, color=NAVY, bold=True, align=PP_ALIGN.CENTER)
-    _footer(slide, 16)
+    _footer(slide, 18)
 
     slide = _new_slide(presentation)
     _header(slide, "16  •  Gereksinim izleme", "Ödev maddeleri ve uygulamadaki karşılıkları", "Maddeler, konuşmada verilen dokuz gereksinim üzerinden eşleştirilmiştir.")
@@ -413,7 +475,7 @@ def _scope_and_conclusion(presentation):
                 paragraph.font.size = Pt(11 if row_index else 12)
                 paragraph.font.bold = row_index == 0
                 paragraph.font.color.rgb = WHITE if row_index == 0 else INK
-    _footer(slide, 17)
+    _footer(slide, 19)
 
     slide = _new_slide(presentation)
     _header(slide, "17  •  Bilinen sınırlamalar", "Tamamlanan iş ve sonraki geliştirme alanları", "Kapsamı dürüstçe ayırmak, model çıktısına gereğinden fazla güvenilmesini önler.")
@@ -421,7 +483,7 @@ def _scope_and_conclusion(presentation):
     _card(slide, 6.72, 2.02, 5.72, 2.65, "Henüz yok / garanti edilmez", ["OCR, vektör arama ve belge sürüm takibi", "Hukuki doğruluğun otomatik kanıtlanması", "Web arayüzü ve devam ettirilebilir işler", "Gerçek GitHub PR ile uçtan uca canlı doğrulama"], GOLD)
     _box(slide, 0.78, 5.12, 11.66, 0.82, GOLD_PALE)
     _text(slide, "Sonraki adımlar: PDF rubriğini doğrula • gerçek mevzuat örnekleriyle uzman değerlendirmesi yap • gerçek PR akışını yetkili test deposunda dene.", 1.0, 5.29, 11.2, 0.45, size=11, color=NAVY, bold=True, align=PP_ALIGN.CENTER)
-    _footer(slide, 18)
+    _footer(slide, 20)
 
     slide = _new_slide(presentation)
     _header(slide, "18  •  Kısa demo", "Uygulamayı sunumda nasıl gösteririm?", "Sentetik test deposunda, dış sisteme yan etki oluşturmadan ana akışı sergileyin.")
@@ -441,7 +503,7 @@ def _scope_and_conclusion(presentation):
         _text(slide, number, x + 0.17, y + 0.22, 0.54, 0.32, size=13, color=TEAL, bold=True)
         _text(slide, title, x + 0.85, y + 0.15, 4.4, 0.32, size=14, color=NAVY, bold=True)
         _text(slide, detail, x + 0.85, y + 0.56, 4.4, 0.3, size=10, color=MUTED)
-    _footer(slide, 19)
+    _footer(slide, 21)
 
     slide = _new_slide(presentation, NAVY)
     _text(slide, "ÖZET", 0.86, 0.82, 3.0, 0.32, size=11, color=CYAN, bold=True)
@@ -449,7 +511,7 @@ def _scope_and_conclusion(presentation):
     _text(slide, "MevzuatAgent; yerel LLM ve RAG'i kontrollü kod inceleme, raporlama ve düzeltme akışına bağlar.", 0.9, 3.62, 10.7, 0.72, size=17, color=RGBColor(215, 227, 240))
     _box(slide, 0.9, 4.76, 11.25, 1.1, NAVY_LIGHT)
     _text(slide, "Kaynak notu: Bu sunum konuşmada verilen dokuz gereksinime göre hazırlanmıştır. Ekli dosya yalnızca PDF simgesi olarak erişilebildi; PDF içeriği ve rubriği doğrulanamadı.", 1.15, 4.94, 10.75, 0.68, size=11, color=WHITE)
-    _footer(slide, 20, dark=True)
+    _footer(slide, 22, dark=True)
 
 
 def create_presentation():

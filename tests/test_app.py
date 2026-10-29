@@ -671,6 +671,7 @@ def test_generate_scan_report_creates_markdown_and_escaped_html(tmp_path):
     assert "&lt;script&gt;" in html_report
     assert "<script>alert(1)</script>" not in html_report
     assert "Kısmi tarama" in markdown
+    assert "<td>None</td>" not in html_report
 
 
 def test_generate_scan_report_warns_when_no_findings(tmp_path):

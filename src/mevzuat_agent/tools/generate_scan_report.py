@@ -151,7 +151,7 @@ def _render_html(result: dict) -> str:
             "<tr>"
             f"<td><code>{_html(file_result.get('path', ''))}</code></td>"
             f"<td>{_html(_translate_status(str(file_result.get('status', 'bilinmiyor'))))}</td>"
-            f"<td>{_html(_translate_message(str(file_result.get('error', ''))))}</td>"
+            f"<td>{_html(_translate_message(str(file_result.get('error') or '')))}</td>"
             "</tr>"
         )
     limitations = [

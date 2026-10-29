@@ -2,11 +2,14 @@
 
 <p><img src="docs/assets/branding/softtech-logo-light-background.svg" alt="Softtech logosu" width="160"></p>
 
-MevzuatAgent, mevzuat belgelerini yerel bir arama indeksine hazırlamak ve
-kullanıcının onayladığı kaynak kod depolarını bu belgeler ışığında incelemek
-için geliştirilen Python tabanlı bir projedir. Projenin hedefi; indirme,
-mevzuat arama, tarama tahmini, bulgu raporlama ve kontrollü düzeltme adımlarını
-birbirinden ayrılmış ve kullanıcı onayına bağlı bir iş akışında toplamaktır.
+MevzuatAgent, kartlı ödeme sistemleri geliştiren yazılım depolarını kullanıcının
+seçtiği mevzuat belgeleri ışığında incelemek için geliştirilen Python tabanlı
+bir projedir. Ödeme başlatma/yetkilendirme, tutar ve para birimi kontrolleri,
+tekrar deneme/idempotency, kart verisi maskeleme, iade ve mutabakat gibi alanlar
+inceleme bağlamını oluşturur. Proje ödeme işlemi gerçekleştirmez ve canlı ödeme
+altyapısına bağlanmaz; yalnızca onaylanan kod ve belge kapsamını analiz eder.
+İndirme, mevzuat arama, tarama tahmini, bulgu raporlama ve kontrollü düzeltme
+adımları ayrı ve kullanıcı onayına bağlıdır.
 
 > **Önemli:** MevzuatAgent hukuk danışmanı değildir. Model çıktıları hukuki
 > görüş veya kesin mevzuat uyumluluğu kararı olarak değerlendirilmemelidir.
@@ -24,6 +27,7 @@ birbirinden ayrılmış ve kullanıcı onayına bağlı bir iş akışında topl
 - [Bileşenler](#bileşenler)
 - [Sistem gereksinimleri](#sistem-gereksinimleri)
 - [Kurulum](#kurulum)
+- [Hızlı yerel test](#hızlı-yerel-test)
 - [İlk çalıştırma](#ilk-çalıştırma)
 - [Ödev sunumu](#ödev-sunumu)
 - [Yapılandırma dosyaları](#yapılandırma-dosyaları)
@@ -186,6 +190,68 @@ gösterilir. Bu durumda kod taraması kullanılamaz.
 4. Ollama'nın çalıştığını Terminal'de `ollama list` komutuyla kontrol edin.
 5. Testleri PyCharm test penceresinden veya `.venv/bin/python -m pytest -q`
    komutuyla çalıştırın.
+
+## Hızlı yerel test
+
+İlk denemeyi sentetik `demo1`/`demo2` depolarıyla yapın; gerçek ödeme verisi
+içeren depo kullanmayın. macOS Terminal veya PyCharm Terminal'de:
+
+```bash
+git clone https://github.com/mehmetdenizersoy-code/MevzuatAgent.git
+cd MevzuatAgent
+./install.sh --skip-model --skip-data --skip-clone
+```
+
+Ollama'yı [resmi kurulumdan](https://ollama.com/download) yükleyip uygulamasını
+başlatın. Sonra bir terminalde modeli indirip servisi kontrol edin:
+
+```bash
+ollama pull gemma3:4b
+ollama list
+ollama run gemma3:4b "Sadece {} döndür."
+```
+
+Modelin kısa deneme yanıtı vermesi, tarama çıktısının geçerli veya hukuken
+doğru olacağını garanti etmez. Bu projede `llama3.2:1b` ile yapılan son gerçek
+tarama denemesi geçersiz JSON üretti. Bu yüzden tarama adımında model listesinden
+`gemma3:4b`'yi özellikle seçin; model yine hata verirse remediation'a geçmeyin.
+Tarama sadece kanıtı doğrulanmış bulgular üretirse sonraki adıma izin verir.
+
+Önce uygulamanın otomatik testlerini çalıştırın:
+
+```bash
+.venv/bin/python -m pytest -q
+```
+
+47 testin geçmesi uygulama araçlarının testidir; Ollama model kalitesini
+doğrulamaz. Ardından menüyü açın:
+
+```bash
+.venv/bin/mevzuat-agent
+```
+
+Menüde şu sırayı izleyin:
+
+1. `1` — Mevzuat belgelerini indirip yerel RAG indeksini hazırlayın. İndirme
+   için internet gerekir; tamamlanınca parça sayısı yazdırılır.
+2. `2` — `repo_link.json` içindeki herkese açık sentetik `demo1` ve `demo2`
+   depolarını klonlamayı onaylayın.
+3. `3` — Klonlanan depolardan birini seçin. İlk deneme için dosya üst sınırını
+   `1` veya `2` girin. Tahmin ekranında taramayı onayladıktan sonra model
+   sorusuna `gemma3:4b` yazın; Enter en hızlı modeli seçer ve bu model küçük
+   testlerde hatalı JSON üretebilir.
+4. Üretilen tarama JSON/Markdown/HTML yollarını ve her dosyanın durumunu
+   kontrol edin. Model hatası veya sıfır doğrulanmış bulgu varsa remediation
+   başlamaz; başka bir modeli seçip `3` adımını tekrarlayın.
+5. Remediation denemek isterseniz diff'i inceleyin ve yalnızca onayladığınız
+   değişikliği uygulayın. Testleri ayrıca onaylayın. **İlk yerel denemede PR
+   açma sorusuna `hayır` deyin**: bu adım gerçek GitHub commit/push işlemi
+   yapar.
+
+Raporlar `data/reports/scans/` ve `data/reports/remediation/` altında oluşur.
+Kurulum, tarama ve remediation adımlarının örnek E2E çıktıları
+[burada](docs/examples/e2e_dogrulama_ozeti.md) bulunur; E2E çıktıları
+deterministik/mock testtir, gerçek model veya gerçek mevzuat tespiti değildir.
 
 ## İlk çalıştırma
 
@@ -450,6 +516,31 @@ kod kanıtı, mevzuat kaynağı ve sınırlamalar yer alır. Bulgu çıkmaması
 uyumluluğun kanıtlandığı anlamına gelmez. HTML raporu kullanıcı/kod kaynaklı
 değerleri HTML olarak kaçışlayarak yazar.
 
+Sunum ve dokümantasyonda rapor biçimini göstermek için sentetik örnekler:
+
+- [Örnek HTML tarama raporu](docs/examples/ornek_tarama_raporu.html) —
+  kartlı ödeme kodu için iki temsili bulgu; `TEST_FIXTURE_NOT_LAW` gerçek mevzuat
+  atfı olmadığını belirtir.
+- [Örnek HTML remediation raporu](docs/examples/ornek_remediation_raporu.html) —
+  izole düzeltme dalına ait temsili diff görünümü.
+- [Uçtan uca doğrulama özeti](docs/examples/e2e_dogrulama_ozeti.md) —
+  RAG, tahmin, tarama, remediation, test ve yerel PR provasının sonuçları.
+- [Uçtan uca tarama raporu](docs/examples/e2e_tarama_raporu.html),
+  [remediation diff raporu](docs/examples/e2e_remediation_raporu.html) ve
+  [test raporu](docs/examples/e2e_test_raporu.html).
+
+Örnekler yalnız rapor biçimini gösterir; gerçek tarama, hukuki görüş, test
+başarısı veya PR sonucu değildir. Ödeme alanındaki maskeleme, idempotency,
+tutar/para birimi ve mutabakat başlıkları da tek başına mevzuat bulgusu sayılmaz;
+ilgili mevzuat metni ile kod kanıtı uzman tarafından doğrulanmalıdır.
+
+E2E raporları deterministik test kanıtıdır: tarama LLM yanıtı mock'tur,
+bulgular sentetiktir, Git push yalnızca geçici yerel bare remote'a yapılmıştır
+ve GitHub PR çağrısı mock'lanmıştır. Gerçek Ollama model kalitesini veya
+hukuki uygunluğu doğrulamaz. Ayrı gerçek `llama3.2:1b` tarama denemesi eksik
+JSON ürettiği için dosya taraması tamamlanmadı; bu durumda uygulama remediation
+aşamasına geçmedi.
+
 ## Remediation ve test
 
 `prepare_remediation_plan` yalnızca plan oluşturur; kendi başına kod
@@ -482,8 +573,8 @@ GitHub'da gerçek bir değişiklik oluşturur.
 
 Testler için Ollama servisi veya gerçek GitHub bağlantısı gerekmez. Demo
 depoları uygulama kaynak deposuna eklenmez; `data/` yerel ve yoksayılan çalışma
-verisidir. İsteğe bağlı sentetik demolar, erişim izni olan kullanıcılar için
-özel [mevzuatagent-test-fixtures](https://github.com/mehmetdenizersoy-code/mevzuatagent-test-fixtures)
+verisidir. İsteğe bağlı sentetik demolar, herkese açık
+[mevzuatagent-test-fixtures](https://github.com/mehmetdenizersoy-code/mevzuatagent-test-fixtures)
 deposundadır. Bu depodaki `demo1` ve `demo2` yalnızca test içindir; toplam on
 bulgu gerçek mevzuat tespiti veya hukukî görüş değildir.
 
@@ -512,6 +603,10 @@ bulgu gerçek mevzuat tespiti veya hukukî görüş değildir.
 
 - Kod tarama için kaynak kod ve ilgili mevzuat parçaları yerel Ollama
   servisine gönderilir; bulut LLM servisine geçiş yapılandırılmamıştır.
+- Uygulama gerçek kart sahibi verisini otomatik maskelediğini garanti etmez.
+  Üretim PAN/CVV/PIN, kimlik bilgisi veya sır içeren depolarda taramayı
+  başlatmayın; mümkünse sentetik ya da hassas veriden arındırılmış test deposu
+  kullanın.
 - GitHub'dan depo klonlamak ağ bağlantısı kullanır ve açık onay ister.
 - İndirilen PDF'ler yerel diskte tutulur; bu verilerin güncelliği ve kullanım
   hakkı kullanıcı tarafından doğrulanmalıdır.

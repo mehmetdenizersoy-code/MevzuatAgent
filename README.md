@@ -191,25 +191,32 @@ gösterilir. Bu durumda kod taraması kullanılamaz.
 5. Testleri PyCharm test penceresinden veya `.venv/bin/python -m pytest -q`
    komutuyla çalıştırın.
 
-## Hızlı yerel test
+### Hızlı yerel test
+
+İlk kez kuruyorsanız önce depoyu klonlayın:
+
+```bash
+git clone https://github.com/mehmetdenizersoy-code/MevzuatAgent.git ~/PycharmProjects/Final-Proje_MevzuatAgent
+```
 
 İlk denemeyi sentetik `demo1`/`demo2` depolarıyla yapın; gerçek ödeme verisi
 içeren depo kullanmayın. macOS Terminal veya PyCharm Terminal'de:
 
 ```bash
-git clone https://github.com/mehmetdenizersoy-code/MevzuatAgent.git
-cd MevzuatAgent
+cd ~/PycharmProjects/Final-Proje_MevzuatAgent
+git pull origin main
 ./install.sh --skip-model --skip-data --skip-clone
-```
-
-Ollama'yı [resmi kurulumdan](https://ollama.com/download) yükleyip uygulamasını
-başlatın. Sonra bir terminalde modeli indirip servisi kontrol edin:
-
-```bash
 ollama pull gemma3:4b
 ollama list
 ollama run gemma3:4b "Sadece {} döndür."
+.venv/bin/python -m pytest -q
+.venv/bin/mevzuat-agent
 ```
+
+Mevcut klonda yeniden çalıştırırken ilk `git clone` komutunu atlayın. Proje
+klasörünüz farklı konumdaysa `cd` ve klonlama hedef yolunu değiştirin. Ollama
+yüklü değilse [resmi kurulumdan](https://ollama.com/download) yükleyip
+uygulamasını başlatın.
 
 Modelin kısa deneme yanıtı vermesi, tarama çıktısının geçerli veya hukuken
 doğru olacağını garanti etmez. Bu projede `llama3.2:1b` ile yapılan son gerçek
@@ -217,18 +224,8 @@ tarama denemesi geçersiz JSON üretti. Bu yüzden tarama adımında model liste
 `gemma3:4b`'yi özellikle seçin; model yine hata verirse remediation'a geçmeyin.
 Tarama sadece kanıtı doğrulanmış bulgular üretirse sonraki adıma izin verir.
 
-Önce uygulamanın otomatik testlerini çalıştırın:
-
-```bash
-.venv/bin/python -m pytest -q
-```
-
 47 testin geçmesi uygulama araçlarının testidir; Ollama model kalitesini
 doğrulamaz. Ardından menüyü açın:
-
-```bash
-.venv/bin/mevzuat-agent
-```
 
 Menüde şu sırayı izleyin:
 

@@ -528,6 +528,16 @@ kod kanıtı, mevzuat kaynağı ve sınırlamalar yer alır. Bulgu çıkmaması
 uyumluluğun kanıtlandığı anlamına gelmez. HTML raporu kullanıcı/kod kaynaklı
 değerleri HTML olarak kaçışlayarak yazar.
 
+Canlı yerel model çalıştırmasının [JSON](docs/examples/gercek_tarama_raporu.json),
+[Markdown](docs/examples/gercek_tarama_raporu.md) ve
+[HTML](docs/examples/gercek_tarama_raporu.html) çıktıları da eklenmiştir. Rapor,
+`data/repositories/demo1` deposunun `203506d` commit'inde 59 kaynak dosyasından
+ilk ikisini `qwen3:4b` ile tarar; tam depo incelemesi değildir. Gerçek model
+çıktısı uzman tarafından doğrulanmamıştır: yorum satırına dayanan, güven puanı
+1/10 olan muhtemel bir yanlış pozitif kritik bulgu içerir ve diğer dosyadaki
+bir bulgu kanıt doğrulamasından geçmemiştir. Bu örnek doğrulanmış mevzuat ihlali
+olarak yorumlanmamalı; model sınırlamalarını da gösterir.
+
 Sunum ve dokümantasyonda rapor biçimini göstermek için sentetik örnekler:
 
 - [Örnek HTML tarama raporu](docs/examples/ornek_tarama_raporu.html) —

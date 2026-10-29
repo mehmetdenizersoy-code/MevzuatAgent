@@ -1,0 +1,58 @@
+{
+  "repository": "data/repositories/demo1",
+  "branch_commit": "master@203506d",
+  "model": "qwen3:4b",
+  "scan_scope": "first 2 tracked source files (limit 2)",
+  "scanned_at": "2026-10-29T16:09:02.020466+00:00",
+  "files_considered": 59,
+  "files_scanned": 2,
+  "findings": [
+    {
+      "severity": "CRITICAL",
+      "title": "Üye işyerlerinden komisyon tutarları ile ilgili bilgi saklama ve açıklama yetkisi",
+      "file": "samples/ThreeDPayment.Sample/Controllers/HomeController.cs",
+      "line": 1,
+      "evidence": "/*",
+      "explanation": "Kodda 1. satır '/*' ile başlayan yorum satırı, mevzuatın 'MADDE 25' ve 'MADDE 31' hükümlerine uyumsuz olarak üyen işyerlerin komisyon tutarları ve sırların saklanması konusunda yetki ve sorumluluk belirlemektedir. Mevzuatta, üye işyerlerin kart hamilinin yazılı rızasını almadan başkasına açıklayamaması ve sırların saklanması gerektiği belirtilmiştir. Ancak kodda yorum satırı, bu konuda yetki ve sorumlulukların doğru şekilde uygulanmasını desteklemek için gerekli olan bilgileri saklamamaktadır.",
+      "mevzuat_source": "002_GeneratePdf",
+      "mevzuat_page": 7,
+      "recommendation": "Üye işyerlerin komisyon tutarları ve kart hamilleri ile ilgili bilgilerin saklanması ve açıklanması konusunda mevzuat hükümlerine uygun olarak yetki ve sorumlulukları belirlemelidir. Yorum satırlarının yerine, mevzuat hükümlerini uygulamak için gerekli olan bilgileri kodda açıkça ifade etmelidir.",
+      "confidence": 1,
+      "mevzuat_evidence": "f) Üye işyerlerinden sağlanan komisyon tutarları\nkart kuruluşlarınca aylık olarak Kuruma iletilir.\nÜye işyerleri\nMADDE 25 –\n (1) Üye işyerleri, kartın kullanımı sonucunda kart ve kart hamili ile ilgili edindikleri bilgileri, kanunla yetkili kılınan kişi, kurum ve kuruluşlar hariç olmak üzere kart hamilinin yazılı rızasını almadan başkasına açıklayamaz, tahsilât amacıyla saklanan harcamaya ait bilgi ve belgeler ile kart hamilince verilen yazılı onay çerçevesinde, dönemsel ödemelerin tahsili amacıyla muhafaza edilen bilgi ve belgeler hariç olmak üzere saklayamaz"
+    }
+  ],
+  "file_results": [
+    {
+      "path": "samples/ThreeDPayment.Sample/Controllers/HomeController.cs",
+      "status": "scanned",
+      "findings": [
+        {
+          "severity": "CRITICAL",
+          "title": "Üye işyerlerinden komisyon tutarları ile ilgili bilgi saklama ve açıklama yetkisi",
+          "file": "samples/ThreeDPayment.Sample/Controllers/HomeController.cs",
+          "line": 1,
+          "evidence": "/*",
+          "explanation": "Kodda 1. satır '/*' ile başlayan yorum satırı, mevzuatın 'MADDE 25' ve 'MADDE 31' hükümlerine uyumsuz olarak üyen işyerlerin komisyon tutarları ve sırların saklanması konusunda yetki ve sorumluluk belirlemektedir. Mevzuatta, üye işyerlerin kart hamilinin yazılı rızasını almadan başkasına açıklayamaması ve sırların saklanması gerektiği belirtilmiştir. Ancak kodda yorum satırı, bu konuda yetki ve sorumlulukların doğru şekilde uygulanmasını desteklemek için gerekli olan bilgileri saklamamaktadır.",
+          "mevzuat_source": "002_GeneratePdf",
+          "mevzuat_page": 7,
+          "recommendation": "Üye işyerlerin komisyon tutarları ve kart hamilleri ile ilgili bilgilerin saklanması ve açıklanması konusunda mevzuat hükümlerine uygun olarak yetki ve sorumlulukları belirlemelidir. Yorum satırlarının yerine, mevzuat hükümlerini uygulamak için gerekli olan bilgileri kodda açıkça ifade etmelidir.",
+          "confidence": 1,
+          "mevzuat_evidence": "f) Üye işyerlerinden sağlanan komisyon tutarları\nkart kuruluşlarınca aylık olarak Kuruma iletilir.\nÜye işyerleri\nMADDE 25 –\n (1) Üye işyerleri, kartın kullanımı sonucunda kart ve kart hamili ile ilgili edindikleri bilgileri, kanunla yetkili kılınan kişi, kurum ve kuruluşlar hariç olmak üzere kart hamilinin yazılı rızasını almadan başkasına açıklayamaz, tahsilât amacıyla saklanan harcamaya ait bilgi ve belgeler ile kart hamilince verilen yazılı onay çerçevesinde, dönemsel ödemelerin tahsili amacıyla muhafaza edilen bilgi ve belgeler hariç olmak üzere saklayamaz"
+        }
+      ],
+      "error": null
+    },
+    {
+      "path": "samples/ThreeDPayment.Sample/Controllers/PaymentController.cs",
+      "status": "scanned_with_rejections",
+      "findings": [],
+      "error": "finding 0 rejected: finding 0 mevzuat evidence does not match the cited excerpt"
+    }
+  ],
+  "limitations": [
+    "Partial scan: selected 2 of 59 tracked source files.",
+    "samples/ThreeDPayment.Sample/Controllers/PaymentController.cs: source truncated to 4000 characters.",
+    "One or more model findings failed evidence validation and were excluded."
+  ],
+  "output_path": "docs/examples/gercek_tarama_raporu.json"
+}

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mevzuat Uyumluluk Tarama Raporu</title>
+<style>
+* { box-sizing: border-box; }
+body { font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 1080px; margin: 0 auto; padding: 32px 22px 56px; color: #24344a; background: #f3f6fa; }
+header { color: #f8fbff; background: linear-gradient(130deg, #112240, #1d365b); border-radius: 18px; padding: 30px; box-shadow: 0 14px 36px #152b481c; }
+header h1 { color: white; margin: 0 0 18px; font-size: clamp(24px, 4vw, 34px); letter-spacing: -.03em; }
+section { background: white; border: 1px solid #e1e7ef; border-radius: 16px; padding: 24px; margin: 20px 0; box-shadow: 0 8px 24px #152b4808; }
+h2 { color: #16345c; margin-top: 0; font-size: 21px; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.summary div { min-width: 0; padding: 12px 14px; background: #ffffff12; border: 1px solid #ffffff20; border-radius: 10px; overflow-wrap: anywhere; }
+.notice { color: #59400a; background: #fff4d6; border: 1px solid #f3dfa9; border-left: 4px solid #d99a00; padding: 12px 15px; border-radius: 8px; }
+.finding { border: 1px solid #e1e7ef; border-left: 5px solid #00afa0; border-radius: 12px; padding: 20px; margin: 14px 0; background: #fff; }
+.finding h3 { color: #16345c; margin: 0 0 10px; }
+table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+th { color: white; background: #1d365b; }
+th, td { text-align: left; vertical-align: top; border-bottom: 1px solid #e1e6ef; padding: 11px; }
+tr:nth-child(even) td { background: #f7f9fc; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; color: #e8eff8; background: #172b46; padding: 15px; border-radius: 10px; }
+code { overflow-wrap: anywhere; }
+@media (max-width: 640px) { body { padding: 16px 12px 32px; } header, section { padding: 18px; } }
+</style>
+</head>
+<body>
+<header>
+<h1>Mevzuat Uyumluluk Tarama Raporu</h1>
+<div class="summary">
+<div><strong>Depo:</strong> sentetik-test/demo1</div>
+<div><strong>Dal / commit:</strong> main@7296b02</div>
+<div><strong>Model:</strong> synthetic-fixture (LLM taraması yapılmadı)</div>
+<div><strong>Kapsam:</strong> Sentetik test: önceden tanımlı örnek bulgular</div>
+<div><strong>Tarih:</strong> 2026-10-29T14:44:23.148051+00:00</div>
+<div><strong>İncelenen dosya:</strong> 1 / 1</div>
+<div><strong>Doğrulanmış bulgu:</strong> 5</div>
+</div>
+<p>Bu otomatik rapordaki bulguları uygulamadan önce kodu ve mevzuat kaynağını uzmanla doğrulayın.</p>
+</header>
+<section><h2>Bulgular</h2><article class="finding"><h3>HIGH: Ödeme başvurusu gizlenmiyor</h3><p><strong>Konum:</strong> <code>payment_rules.py:6</code> · <strong>Güven:</strong> 10/10</p><p><strong>Mevzuat:</strong> TEST_FIXTURE_NOT_LAW, sayfa 1</p><p>Maskeleme işlevi girdiyi olduğu gibi döndürüyor.</p><p><strong>Öneri:</strong> Son dört karakteri koruyup önceki karakterleri maskeleyin.</p><pre><code>    return value</code></pre></article><article class="finding"><h3>MEDIUM: Sıfır tutar geçerli sayılıyor</h3><p><strong>Konum:</strong> <code>payment_rules.py:11</code> · <strong>Güven:</strong> 10/10</p><p><strong>Mevzuat:</strong> TEST_FIXTURE_NOT_LAW, sayfa 1</p><p>İşlev sıfır tutara da olumlu yanıt veriyor.</p><p><strong>Öneri:</strong> Pozitif tutar için sıfırdan büyük olma koşulunu kullanın.</p><pre><code>    return amount &gt;= 0</code></pre></article><article class="finding"><h3>MEDIUM: Son kullanma ayı dikkate alınmıyor</h3><p><strong>Konum:</strong> <code>payment_rules.py:21</code> · <strong>Güven:</strong> 9/10</p><p><strong>Mevzuat:</strong> TEST_FIXTURE_NOT_LAW, sayfa 1</p><p>Aynı yıldaki ay karşılaştırması yapılmıyor.</p><p><strong>Öneri:</strong> Yıl eşitse son kullanma ayını da mevcut ayla karşılaştırın.</p><pre><code>    return expiry_year &lt; current_year</code></pre></article><article class="finding"><h3>LOW: Taksit tutarı hesaplanmıyor</h3><p><strong>Konum:</strong> <code>payment_rules.py:26</code> · <strong>Güven:</strong> 10/10</p><p><strong>Mevzuat:</strong> TEST_FIXTURE_NOT_LAW, sayfa 1</p><p>Taksit tutarı toplam tutardan ve taksit sayısından hesaplanmıyor.</p><p><strong>Öneri:</strong> Geçerli taksit sayısı için toplamı taksit sayısına bölün.</p><pre><code>    return total</code></pre></article><article class="finding"><h3>LOW: İsim alanındaki boşluklar temizlenmiyor</h3><p><strong>Konum:</strong> <code>payment_rules.py:31</code> · <strong>Güven:</strong> 10/10</p><p><strong>Mevzuat:</strong> TEST_FIXTURE_NOT_LAW, sayfa 1</p><p>İşlev baştaki ve sondaki boşlukları kaldırmıyor.</p><p><strong>Öneri:</strong> İsim metninin başındaki ve sonundaki boşlukları temizleyin.</p><pre><code>    return name</code></pre></article></section>
+<section><h2>Dosya sonuçları</h2>
+<table><thead><tr><th>Dosya</th><th>Durum</th><th>Açıklama</th></tr></thead>
+<tbody><tr><td><code>payment_rules.py</code></td><td>synthetic_fixture</td><td></td></tr></tbody></table>
+</section>
+<section><h2>Sınırlamalar</h2><ul><li>Sentetik test bulgularıdır; gerçek mevzuat taraması veya hukukî tespit değildir.</li></ul></section>
+</body>
+</html>

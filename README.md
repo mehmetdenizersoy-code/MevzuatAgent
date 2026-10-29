@@ -224,26 +224,37 @@ tarama denemesi geçersiz JSON üretti. Bu yüzden tarama adımında model liste
 `gemma3:4b`'yi özellikle seçin; model yine hata verirse remediation'a geçmeyin.
 Tarama sadece kanıtı doğrulanmış bulgular üretirse sonraki adıma izin verir.
 
-47 testin geçmesi uygulama araçlarının testidir; Ollama model kalitesini
-doğrulamaz. Ardından menüyü açın:
+Uygulama basit bir sohbet olarak açılır. Mevzuat kapsamını listedeki numara,
+dosya adı veya `*` (tümü) ile sohbette seçin; ör. `1` ya da `1,2`. Ardından
+proje hakkında doğal dille soru sorabilir veya `devam` yazarak pipeline'ın
+önerdiği adımı başlatabilirsiniz. `yardım` komutları, `çıkış` uygulamayı
+kapatır. Sohbet yanıtları sistem promptuna ve güncel pipeline durumuna göre
+yerel Ollama modeliyle üretilir.
 
-Menüde şu sırayı izleyin:
+Pipeline aşamasını doğrudan sohbet isteğiyle de başlatabilirsiniz: `RAG
+hazırla`, `depoları klonla`, `tarama yap`, `bulguları düzelt`. Her aşamadaki
+indirme, klonlama, tarama, dosya değiştirme ve PR onayları ayrıca alınır.
 
-1. `1` — Mevzuat belgelerini indirip yerel RAG indeksini hazırlayın. İndirme
-   için internet gerekir; tamamlanınca parça sayısı yazdırılır.
-2. `2` — `repo_link.json` içindeki herkese açık sentetik `demo1` ve `demo2`
-   depolarını klonlamayı onaylayın.
-3. `3` — Klonlanan depolardan birini seçin. İlk deneme için dosya üst sınırını
-   `1` veya `2` girin. Tahmin ekranında taramayı onayladıktan sonra model
-   sorusuna `gemma3:4b` yazın; Enter en hızlı modeli seçer ve bu model küçük
-   testlerde hatalı JSON üretebilir.
-4. Üretilen tarama JSON/Markdown/HTML yollarını ve her dosyanın durumunu
-   kontrol edin. Model hatası veya sıfır doğrulanmış bulgu varsa remediation
-   başlamaz; başka bir modeli seçip `3` adımını tekrarlayın.
-5. Remediation denemek isterseniz diff'i inceleyin ve yalnızca onayladığınız
-   değişikliği uygulayın. Testleri ayrıca onaylayın. **İlk yerel denemede PR
-   açma sorusuna `hayır` deyin**: bu adım gerçek GitHub commit/push işlemi
-   yapar.
+`tarama yap` isteğinde depo listesinde `[SENTETİK TEST]` olarak işaretlenen
+`data/test_repositories/demo1` veya `demo2` seçilirse beş önceden tanımlı bulgu
+ile JSON, Markdown, HTML ve düzeltme planı oluşturulur. Bu deterministik demo
+Ollama çağırmaz; rapor gerçek mevzuat tespiti değildir. Normal `data/repositories`
+altındaki bir `demo1`/`demo2` taraması bulgusuz veya hatalı sonuçlanırsa uygulama
+ayrı bir sentetik örnek rapor üretmeyi teklif eder. Kabul edilirse bu rapor
+gerçek tarama veya remediation girdisi olarak kullanılmaz.
+Örnek çıktı: [Markdown raporu](docs/examples/sentetik_demo1_tarama.md) |
+[HTML raporu](docs/examples/sentetik_demo1_tarama.html).
+
+Gerçek taramada tahmin ekranında taramayı onaylayın ve model sorusuna
+`gemma3:4b` yazın. Model hatası veya sıfır doğrulanmış bulgu varsa gerçek
+remediation başlamaz. Remediation diff'ini inceleyin ve yalnızca onayladığınız
+değişikliği uygulayın; testleri ayrıca onaylayın. İlk denemede PR açma sorusuna
+`hayır` deyin: bu adım gerçek GitHub commit/push işlemi yapar.
+
+Remediation'ı daha sonra sürdürmek için `m` → `4` seçebilirsiniz. Uygulama son
+tarama raporundaki depo kökünü ve tarama JSON yolunu otomatik bulur; bu yolları
+elle yazmanız gerekmez. Son taramadaki bulgular için geçerli bir depo yolu
+bulunamazsa yeniden klonlayıp tarayın.
 
 Raporlar `data/reports/scans/` ve `data/reports/remediation/` altında oluşur.
 Kurulum, tarama ve remediation adımlarının örnek E2E çıktıları
@@ -258,7 +269,7 @@ Sanal ortamı etkinleştirin:
 source .venv/bin/activate
 ```
 
-Türkçe etkileşimli menüyü başlatma:
+Türkçe sohbet arayüzünü başlatma:
 
 ```bash
 mevzuat-agent
@@ -266,12 +277,12 @@ mevzuat-agent
 python -m mevzuat_agent
 ```
 
-Menüde mevzuat/RAG hazırlama, onayla depo klonlama, depo seçip model tahmini
-görme ve taramayı onaylama adımları bulunur. Tarama sonunda doğrulanmış bulgu
-varsa uygulama aynı depo ve tarama raporunu kullanarak remediation'a geçmek
-isteyip istemediğinizi sorar; onaylarsanız menüdeki 4. adıma dönüp yolları
-yeniden girmeniz gerekmez. Bulgu yoksa remediation başlatılmaz; model yanıtı
-hataları gösterilir ve başka bir modelle taramayı tekrarlamanız önerilir.
+Sohbette mevzuat kapsamını seçtikten sonra doğal dille proje hakkında
+konuşabilir ve `devam` yazarak önerilen pipeline aşamasını çalıştırabilirsiniz.
+Tarama sonunda doğrulanmış bulgu varsa uygulama aynı depo ve tarama raporuyla
+remediation'a geçmek için ayrıca onay ister. Gerçek tarama bulgusuz kalırsa
+remediation durdurulur; `demo1`/`demo2` için yalnızca ayrı, açıkça sentetik
+olarak işaretlenmiş bir örnek rapor seçeneği sunulur.
 
 Remediation seçeneği, tarama JSON dosyasından en öncelikli iki bulguyu seçer;
 Ollama önerisinin diff'ini gösterir. Kod değişikliği, test çalıştırma ve

@@ -2,6 +2,7 @@
 
 from html import escape
 from pathlib import Path
+import subprocess
 
 from PIL import Image, ImageDraw, ImageFont
 from pptx import Presentation
@@ -20,6 +21,9 @@ OUTPUT_PRESENTATION = ROOT / "docs/MevzuAI_Sunum_Guncel.pptx"
 OUTPUT_MARKDOWN = ROOT / "docs/MevzuAI_Birlesik_Risk_ve_Remediation_Ozeti.md"
 OUTPUT_HTML = ROOT / "docs/MevzuAI_Birlesik_Risk_ve_Remediation_Ozeti.html"
 ASSETS_DIR = ROOT / "docs/assets/mevuai_evidence"
+BRAND_SVG = ROOT / "docs/assets/branding/softtech-logo.svg"
+BRAND_PNG = ROOT / "docs/assets/branding/softtech-logo.png"
+BRAND_LIGHT_SVG = ROOT / "docs/assets/branding/softtech-logo-light-background.svg"
 
 NAVY = RGBColor(17, 34, 64)
 NAVY_LIGHT = RGBColor(29, 54, 91)
@@ -175,7 +179,8 @@ def _html_report() -> str:
 *{{box-sizing:border-box}} body{{margin:0;background:var(--paper);color:var(--ink);
 font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
 main{{max-width:1120px;margin:36px auto;padding:0 22px 48px}}
-header{{background:var(--navy);color:white;padding:34px 38px;border-radius:18px}}
+header{{position:relative;background:var(--navy);color:white;padding:34px 190px 34px 38px;border-radius:18px}}
+.brand{{position:absolute;right:28px;top:24px;width:132px;height:auto}}
 .eyebrow{{color:#35bed7;font-weight:700;letter-spacing:.1em;text-transform:uppercase}}
 h1{{font-size:30px;line-height:1.2;margin:8px 0}}
 header p{{color:#d7e3f0;margin:8px 0 0}}
@@ -202,6 +207,7 @@ ul{{padding-left:22px}} li{{margin:7px 0}}
 </head>
 <body><main>
 <header>
+<img class="brand" src="assets/branding/softtech-logo.svg" alt="Softtech logosu">
 <div class="eyebrow">Yönetici özeti · 24 Ekim 2026</div>
 <h1>Birleşik mevzuat uyumu ve depo risk analizi</h1>
 <p>Kanun 5464 ve Yönetmelik 11180 kapsamındaki kaynak raporların güvenli özeti</p>
@@ -236,6 +242,8 @@ temizliği ayrı operasyonel takip gerektirir.</li>
 raporlarındaki bilgileri düzenler. Bağımsız kod taraması, test çalıştırması veya
 hukuki uygunluk değerlendirmesi değildir. Merge öncesinde depo sahipleri,
 güvenlik ekibi ve mevzuat uzmanı doğrulamalıdır.</p>
+<p class="source">Softtech logosu görsel amaçlı kullanılmıştır; bu proje Softtech
+tarafından destekleniyor veya resmen onaylanıyor anlamına gelmez.</p>
 <p class="source">Kaynaklar: birlesik_mevzuat_uyum_risk_raporu_20261024_1710.html;
 remediation_farklari_top5_tur2_20261024_2000.html.</p>
 </main></body></html>"""
@@ -361,6 +369,32 @@ def _create_evidence_captures() -> dict[str, Path]:
         ),
     }
     return captures
+
+
+def _ensure_softtech_logo() -> Path:
+    if BRAND_PNG.is_file():
+        return BRAND_PNG
+    if not BRAND_SVG.is_file():
+        raise FileNotFoundError(f"Resmî logo SVG'si bulunamadı: {BRAND_SVG}")
+
+    BRAND_PNG.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        ["sips", "-s", "format", "png", str(BRAND_SVG), "--out", str(BRAND_PNG)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return BRAND_PNG
+
+
+def _ensure_light_background_logo() -> Path:
+    if not BRAND_SVG.is_file():
+        raise FileNotFoundError(f"Resmî logo SVG'si bulunamadı: {BRAND_SVG}")
+    light_logo = BRAND_SVG.read_text(encoding="utf-8").replace(
+        'fill="white"', 'fill="#112240"'
+    )
+    BRAND_LIGHT_SVG.write_text(light_logo, encoding="utf-8")
+    return BRAND_LIGHT_SVG
 
 
 def _set_shape_text(shape, text: str, size: int, color: RGBColor, bold: bool = False):
@@ -596,18 +630,46 @@ def _add_evidence_slides(presentation, captures: dict[str, Path]):
             Inches(0.68),
             Inches(1.82),
             width=Inches(12.0),
-            height=Inches(4.93),
+            height=Inches(4.72),
         )
         _add_text(
             slide,
             note,
             0.75,
-            6.85,
-            12.0,
-            0.28,
+            6.64,
+            10.1,
+            0.44,
             9,
             MUTED,
         )
+
+
+def _add_softtech_branding(presentation, logo_path: Path):
+    slides = list(presentation.slides)
+    for slide in slides[1:]:
+        slide.shapes.add_picture(
+            str(logo_path),
+            Inches(10.92),
+            Inches(6.98),
+            width=Inches(1.05),
+        )
+    if slides:
+        slides[0].shapes.add_picture(
+            str(logo_path),
+            Inches(10.05),
+            Inches(5.83),
+            width=Inches(2.35),
+        )
+    _add_text(
+        slides[-1],
+        "Softtech logosu görsel amaçlıdır; kurumsal onay veya iş birliği beyanı değildir.",
+        0.75,
+        6.28,
+        9.9,
+        0.3,
+        9,
+        MUTED,
+    )
 
 
 def main():
@@ -623,6 +685,8 @@ def main():
     _add_report_slides(presentation)
     captures = _create_evidence_captures()
     _add_evidence_slides(presentation, captures)
+    _add_softtech_branding(presentation, _ensure_softtech_logo())
+    _ensure_light_background_logo()
     OUTPUT_PRESENTATION.parent.mkdir(parents=True, exist_ok=True)
     presentation.save(str(OUTPUT_PRESENTATION))
 

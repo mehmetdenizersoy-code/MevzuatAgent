@@ -1,5 +1,7 @@
 # MevzuatAgent
 
+<p><img src="docs/assets/branding/softtech-logo-light-background.svg" alt="Softtech logosu" width="160"></p>
+
 MevzuatAgent, mevzuat belgelerini yerel bir arama indeksine hazırlamak ve
 kullanıcının onayladığı kaynak kod depolarını bu belgeler ışığında incelemek
 için geliştirilen Python tabanlı bir projedir. Projenin hedefi; indirme,
@@ -11,6 +13,9 @@ birbirinden ayrılmış ve kullanıcı onayına bağlı bir iş akışında topl
 > Her bulgu ilgili kaynak ve uzman tarafından doğrulanmalıdır. Test deposundaki
 > `demo1` ve `demo2` örnekleri yalnızca sentetik test verisidir; gerçek mevzuat
 > ihlali iddiası taşımaz.
+>
+> Softtech logosu yalnızca görsel kimlik amacıyla kullanılmıştır; bu proje
+> Softtech tarafından destekleniyor veya resmen onaylanıyor anlamına gelmez.
 
 ## İçindekiler
 
@@ -243,6 +248,9 @@ gösterimidir; test deposu/diff/test görselleri yerel fixture kayıtlarından
 PR'ı değildir. Güvenli paylaşım için kaynak raporlardaki credential ve token
 örnekleri yeni çıktılara aktarılmaz. Özet, kaynak raporların beyanlarını
 düzenler; bağımsız yeniden tarama veya test sonucu değildir.
+Softtech logo dosyası resmî web sitesindeki
+[logo SVG'sinden](https://softtech.com.tr/dosyalar/header/companyLogo.svg)
+alınmıştır; açık zemin için koyu yazılı sürüm aynı dosyadan üretilmiştir.
 
 ## Yapılandırma dosyaları
 

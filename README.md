@@ -199,11 +199,17 @@ python -m mevzuat_agent
 ```
 
 Menüde mevzuat/RAG hazırlama, onayla depo klonlama, depo seçip model tahmini
-görme ve taramayı onaylama adımları bulunur. Remediation seçeneği, tarama JSON
-dosyasından en öncelikli iki bulguyu seçer; Ollama önerisinin diff'ini
-gösterir. Kod değişikliği, test çalıştırma ve GitHub PR için birbirinden ayrı
-onaylar ister. PR aşaması gerçek commit ve push yapar; bunu yalnızca doğru
-Git deposunu seçtiğinizden emin olduktan sonra onaylayın.
+görme ve taramayı onaylama adımları bulunur. Tarama sonunda doğrulanmış bulgu
+varsa uygulama aynı depo ve tarama raporunu kullanarak remediation'a geçmek
+isteyip istemediğinizi sorar; onaylarsanız menüdeki 4. adıma dönüp yolları
+yeniden girmeniz gerekmez. Bulgu yoksa remediation başlatılmaz; model yanıtı
+hataları gösterilir ve başka bir modelle taramayı tekrarlamanız önerilir.
+
+Remediation seçeneği, tarama JSON dosyasından en öncelikli iki bulguyu seçer;
+Ollama önerisinin diff'ini gösterir. Kod değişikliği, test çalıştırma ve
+GitHub PR için birbirinden ayrı onaylar ister. PR aşaması gerçek commit ve
+push yapar; bunu yalnızca doğru Git deposunu seçtiğinizden emin olduktan sonra
+onaylayın.
 
 ## Ödev sunumu
 
@@ -217,6 +223,22 @@ verisini, doğrulama sonuçlarını ve bilinen sınırlamaları anlatan Türkçe
 Sunum, konuşmada verilen dokuz gereksinime dayanır. Ekli PDF dosyası bu çalışma
 ortamında yalnızca genel bir PDF simgesi olarak göründüğünden içindeki rubrik
 doğrulanamamıştır; PDF şartlarıyla birebir eşleştirme yapıldığı iddia edilmez.
+
+### MevzuAI saha raporlarıyla güncellenmiş ekler
+
+Sağlanan `MevzuAI_Sunum.pptx` ve 24.10.2026 tarihli iki HTML raporunun
+özetini içeren ek materyaller:
+
+- [Güncel MevzuAI sunumu](docs/MevzuAI_Sunum_Guncel.pptx)
+- [Birleşik risk ve remediation özeti — HTML](docs/MevzuAI_Birlesik_Risk_ve_Remediation_Ozeti.html)
+- [Birleşik risk ve remediation özeti — Markdown](docs/MevzuAI_Birlesik_Risk_ve_Remediation_Ozeti.md)
+
+Tekrar üretmek için üç kaynak dosyayı `data/temp_reference/` klasörüne koyup
+`.venv/bin/python scripts/update_mevzuai_materials.py` çalıştırın. Kaynak
+klasör `data/` altında olduğundan Git'e eklenmez; üretilen sunum ve özetler
+`docs/` altında kalır. Güvenli paylaşım için kaynak raporlardaki credential ve
+token örnekleri yeni çıktılara aktarılmaz. Özet, kaynak raporların beyanlarını
+düzenler; bağımsız yeniden tarama veya test sonucu değildir.
 
 ## Yapılandırma dosyaları
 

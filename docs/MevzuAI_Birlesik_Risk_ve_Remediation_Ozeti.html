@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MevzuAI — Birleşik Risk ve Remediation Özeti</title>
+<style>
+:root{--navy:#112240;--teal:#00afa0;--ink:#223045;--muted:#637389;
+--paper:#f7f9fc;--line:#dee5ee;--blue:#e7f0fa;--gold:#fff6df;}
+*{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);
+font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:1120px;margin:36px auto;padding:0 22px 48px}
+header{background:var(--navy);color:white;padding:34px 38px;border-radius:18px}
+.eyebrow{color:#35bed7;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+h1{font-size:30px;line-height:1.2;margin:8px 0}
+header p{color:#d7e3f0;margin:8px 0 0}
+h2{color:var(--navy);font-size:21px;margin:30px 0 12px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}
+.card{background:white;border:1px solid var(--line);border-radius:14px;padding:18px}
+.card strong{display:block;font-size:30px;color:var(--navy)}
+.card span{color:var(--muted);font-size:13px}
+.distribution-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.distribution{background:white;border:1px solid var(--line);padding:12px 14px;
+border-radius:10px;display:flex;justify-content:space-between}
+.distribution span{font-size:13px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;background:white;border-radius:12px;
+overflow:hidden;border:1px solid var(--line)}
+th,td{padding:13px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{background:var(--navy);color:white} tbody th{white-space:nowrap;color:var(--navy)}
+.notice{background:var(--gold);border-left:4px solid #f8bc4a;padding:15px 18px;
+border-radius:8px} .source{color:var(--muted);font-size:13px}
+ul{padding-left:22px} li{margin:7px 0}
+@media(max-width:760px){.cards{grid-template-columns:repeat(2,1fr)}
+.distribution-grid{grid-template-columns:repeat(2,1fr)} header{padding:25px}}
+@media print{body{background:white}main{margin:0;max-width:none}header{border-radius:0}}
+</style>
+</head>
+<body><main>
+<header>
+<div class="eyebrow">Yönetici özeti · 24 Ekim 2026</div>
+<h1>Birleşik mevzuat uyumu ve depo risk analizi</h1>
+<p>Kanun 5464 ve Yönetmelik 11180 kapsamındaki kaynak raporların güvenli özeti</p>
+</header>
+<section class="cards" aria-label="Özet ölçümler">
+<div class="card"><strong>35</strong><span>Taranan depo</span></div>
+<div class="card"><strong>82</strong><span>Toplam bulgu</span></div>
+<div class="card"><strong>%67</strong><span>61 değerlendirmede uyum oranı</span></div>
+<div class="card"><strong>9</strong><span>Doğrulanmalı etiketi</span></div>
+</section>
+<h2>Bulgu dağılımı</h2>
+<div class="distribution-grid"><div class="distribution"><span>KRİTİK</span><strong>24</strong></div><div class="distribution"><span>YÜKSEK</span><strong>23</strong></div><div class="distribution"><span>ORTA</span><strong>21</strong></div><div class="distribution"><span>DÜŞÜK</span><strong>9</strong></div><div class="distribution"><span>BİLGİ</span><strong>5</strong></div></div>
+<h2>Mevzuat değerlendirmesi</h2>
+<p>61 hüküm-depo değerlendirmesinin 41'i uyumlu, 10'u kısmi ve 10'u ihlal riski
+olarak raporlanmıştır. Depo bazında en yüksek risk dağılımı 17 kritik, 8 yüksek
+ve 10 orta seviyedir. Kaynakta 13 RAG chunk ve 9 DB-RAG atfı kullanıldığı belirtilir.</p>
+<h2>Remediation tur 2 — onaylanan beş kritik bulgu</h2>
+<p>Fark raporu 5 depo, 9 dosya ve toplam +89/-10 satır değişikliği bildirir.</p>
+<table><thead><tr><th>Bulgu</th><th>Alan</th><th>Düzeltme özeti</th></tr></thead>
+<tbody><tr><th>RISK-C05</th><td>Safir.Abex · Kimlik bilgisi</td><td>Kod içindeki Basic-auth sabitini kaldırıp yapılandırma/secret store üzerinden okumak; mevcut credential rotasyonu ayrıca izlenmeli.</td></tr><tr><th>RISK-C08</th><td>safir-online-sobe · Eşleşme ve log</td><td>ZERO_CVV merchant eşleşmesini tam eşleşmeye çevirmek; PIN/F55 benzeri hassas trace alanlarını maskelemek.</td></tr><tr><th>RISK-C09</th><td>acqua-dcc-monex · DCC teklif akışı</td><td>İstek kimliğiyle idempotency sağlamak ve geçersiz kur değerlerini POS&#x27;a dönmeden önce reddetmek.</td></tr><tr><th>RISK-C10</th><td>acqua-cassandra-data-archiver · Arşiv</td><td>S3 yüklemesini nesne metadata/boyut doğrulamasıyla teyit etmeden kaynak kayıtlarını silmemek.</td></tr><tr><th>RISK-C11</th><td>acqua-rrn-generator · Sayaç</td><td>Cassandra LWT [applied] sonucunu denetlemek; başarısızlıkta sınırlı yeniden deneme ve açık hata üretmek.</td></tr></tbody></table>
+<h2>Açık doğrulama ve operasyon işleri</h2>
+<ul>
+<li>Fark raporunda 3 konu “Doğrulanmalı” olarak işaretlenmiştir.</li>
+<li>Credential rotasyonu/vault ve altyapı-konfigürasyon işleri kod farkından
+ayrı takip edilmelidir; sonraki tur bulguları bu kapsamda değildir.</li>
+<li>Kaynak rapor bir PR dalı belirtir; testlerin geçtiği veya GitHub PR'ın
+açıldığı bu belgelerle doğrulanmamıştır.</li>
+<li>Credential/token değerleri bu özete aktarılmamıştır. Rotasyon ve Git geçmişi
+temizliği ayrı operasyonel takip gerektirir.</li>
+</ul>
+<p class="notice"><strong>Yorumlama sınırı:</strong> Bu özet, sağlanan HTML
+raporlarındaki bilgileri düzenler. Bağımsız kod taraması, test çalıştırması veya
+hukuki uygunluk değerlendirmesi değildir. Merge öncesinde depo sahipleri,
+güvenlik ekibi ve mevzuat uzmanı doğrulamalıdır.</p>
+<p class="source">Kaynaklar: birlesik_mevzuat_uyum_risk_raporu_20261024_1710.html;
+remediation_farklari_top5_tur2_20261024_2000.html.</p>
+</main></body></html>

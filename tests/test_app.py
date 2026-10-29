@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from mevzuat_agent import main
+from mevzuat_agent import console
 from mevzuat_agent.prompt import load_system_prompt
 from mevzuat_agent.tools.clone_repositories import clone_repositories
 from mevzuat_agent.tools.apply_remediation import apply_remediation
@@ -33,6 +34,7 @@ from mevzuat_agent.tools.generate_scan_report import generate_scan_report
 from mevzuat_agent.tools.prepare_remediation_plan import prepare_remediation_plan
 from mevzuat_agent.tools.scan_repository import (
     RepositoryScanResult,
+    ScannedFile,
     ScanFinding,
     scan_repository,
     validate_scan_findings,
@@ -42,7 +44,10 @@ from mevzuat_agent.tools.mevzuat_config import (
     save_mevzuat_links,
 )
 from mevzuat_agent.tools.validate_config import validate_config
-from mevzuat_agent.workflows.scan import build_scan_workflow
+from mevzuat_agent.workflows.scan import (
+    RepositoryScanArtifacts,
+    build_scan_workflow,
+)
 
 
 def test_main(capsys):
@@ -1327,6 +1332,113 @@ def test_langchain_scan_workflow_does_not_scan_when_user_declines(tmp_path):
     assert result.status == "scan_declined"
     assert result.selected_model is None
     assert result.repositories == ()
+
+
+def test_scan_result_offers_remediation_with_repository_and_scan_path(tmp_path, monkeypatch):
+    repository = tmp_path / "demo"
+    scan_path = tmp_path / "scan.json"
+    scan = RepositoryScanResult(
+        repository="demo",
+        branch_commit="main@abc123",
+        model="test-model",
+        scan_scope="test",
+        scanned_at="2026-10-29T00:00:00+00:00",
+        files_considered=1,
+        files_scanned=1,
+        findings=(
+            ScanFinding(
+                severity="HIGH",
+                title="Synthetic issue",
+                file="source.py",
+                line=1,
+                evidence="pass",
+                explanation="Test finding.",
+                mevzuat_source="TEST_FIXTURE_NOT_LAW",
+                mevzuat_page=1,
+                recommendation="Review.",
+                confidence=10,
+            ),
+        ),
+        file_results=(),
+        limitations=(),
+        output_path=scan_path,
+    )
+    artifact = RepositoryScanArtifacts(
+        scan=scan,
+        markdown_report=tmp_path / "scan.md",
+        html_report=tmp_path / "scan.html",
+        remediation_plan=None,
+    )
+    observed = {}
+    monkeypatch.setattr(console, "_ask_yes", lambda question: True)
+    monkeypatch.setattr(
+        console,
+        "_remediate_and_pr",
+        lambda repo, path: observed.update(repository=repo, scan_path=path),
+    )
+
+    console._offer_remediation(repository, artifact)
+
+    assert observed == {"repository": repository, "scan_path": scan_path}
+
+
+def test_scan_result_without_findings_explains_model_error_and_skips_remediation(
+    tmp_path, monkeypatch, capsys
+):
+    scan = RepositoryScanResult(
+        repository="demo",
+        branch_commit="main@abc123",
+        model="test-model",
+        scan_scope="test",
+        scanned_at="2026-10-29T00:00:00+00:00",
+        files_considered=1,
+        files_scanned=0,
+        findings=(),
+        file_results=(
+            ScannedFile(
+                path="broken.py",
+                status="error",
+                findings=(),
+                error="Invalid JSON response",
+            ),
+        ),
+        limitations=(),
+        output_path=tmp_path / "scan.json",
+    )
+    artifact = RepositoryScanArtifacts(
+        scan=scan,
+        markdown_report=tmp_path / "scan.md",
+        html_report=tmp_path / "scan.html",
+        remediation_plan=None,
+    )
+    monkeypatch.setattr(
+        console,
+        "_remediate_and_pr",
+        lambda *args: pytest.fail("Bulgu yokken remediation başlatılmamalı."),
+    )
+
+    console._offer_remediation(tmp_path / "demo", artifact)
+
+    output = capsys.readouterr().out
+    assert "remediation başlatılamaz" in output
+    assert "Invalid JSON response" in output
+    assert "başka bir model" in output
+
+
+def test_remediation_stops_when_scan_has_no_findings(tmp_path, monkeypatch, capsys):
+    scan_path = tmp_path / "scan.json"
+    scan_path.write_text(
+        json.dumps({"findings": [], "file_results": []}),
+        encoding="utf-8",
+    )
+    with patch(
+        "mevzuat_agent.console.propose_remediation",
+        side_effect=AssertionError("Bulgu yokken model çağrılmamalı."),
+    ) as propose:
+        console._remediate_and_pr(tmp_path, scan_path)
+
+    propose.assert_not_called()
+    assert "doğrulanmış bulgu olmadığından" in capsys.readouterr().out
 
 
 def _workflow_test_pool(repository: Path) -> ModelPoolEstimate:

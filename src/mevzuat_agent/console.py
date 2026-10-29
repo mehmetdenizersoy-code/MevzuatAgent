@@ -14,7 +14,11 @@ from mevzuat_agent.tools.propose_remediation import propose_remediation
 from mevzuat_agent.tools.scan_repository import run_git_command
 from mevzuat_agent.tools.validate_config import validate_config
 from mevzuat_agent.tools.validate_remediation import TestRunner, validate_remediation
-from mevzuat_agent.workflows.scan import ScanApprovalRequest, run_scan_workflow
+from mevzuat_agent.workflows.scan import (
+    RepositoryScanArtifacts,
+    ScanApprovalRequest,
+    run_scan_workflow,
+)
 
 
 _ROOT = Path(__file__).resolve().parents[2]
@@ -173,12 +177,61 @@ def _scan_repository() -> None:
         print(f"HTML: {artifact.html_report}")
         if artifact.remediation_plan:
             print(f"Plan: {artifact.remediation_plan}")
+        _offer_remediation(repository, artifact)
 
 
-def _remediate_and_pr() -> None:
-    repository = _prompt_path("Git deposunun kök dizini")
-    scan_path = _prompt_path("Tarama JSON dosyası")
-    scan_result = json.loads(scan_path.read_text(encoding="utf-8"))
+def _offer_remediation(repository: Path, artifact: RepositoryScanArtifacts) -> None:
+    if artifact.scan.findings:
+        if _ask_yes(
+            f"{len(artifact.scan.findings)} doğrulanmış bulgu var. "
+            "Remediation adımına şimdi geçilsin mi?"
+        ):
+            _remediate_and_pr(repository, artifact.scan.output_path)
+        else:
+            print("Remediation ertelendi. Menüden 4'ü seçerek sonra devam edebilirsiniz.")
+        return
+
+    errors = [
+        f"{item.path}: {item.error}"
+        for item in artifact.scan.file_results
+        if item.error
+    ]
+    if errors:
+        print("Tarama doğrulanmış bulgu üretemedi; remediation başlatılamaz.")
+        for error in errors:
+            print(f"  - {error}")
+        print(
+            "Model yanıtı hatalı veya boşsa 3. menüden taramayı yeniden "
+            "başlatıp başka bir model seçin."
+        )
+    else:
+        print(
+            "Doğrulanmış bulgu bulunmadı; remediation için önce "
+            "kanıtlanmış bulgu içeren bir tarama gerekir."
+        )
+
+
+def _remediate_and_pr(
+    repository_path: Path | None = None,
+    scan_result_path: Path | None = None,
+) -> None:
+    if (repository_path is None) != (scan_result_path is None):
+        raise ValueError("Depo ve tarama sonucu birlikte sağlanmalı.")
+    repository = repository_path or _prompt_path("Git deposunun kök dizini")
+    scan_path = scan_result_path or _prompt_path("Tarama JSON dosyası")
+    try:
+        scan_result = json.loads(scan_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Tarama JSON dosyası geçersiz: {scan_path}") from exc
+    if not isinstance(scan_result, dict) or not isinstance(scan_result.get("findings"), list):
+        raise ValueError("Tarama sonucu geçerli bir bulgu listesi içermiyor.")
+    if not scan_result["findings"]:
+        print("Bu taramada doğrulanmış bulgu olmadığından remediation başlatılamaz.")
+        for item in scan_result.get("file_results", []):
+            if isinstance(item, dict) and item.get("error"):
+                print(f"- {item.get('path', 'Dosya')}: {item['error']}")
+        print("Model hatası varsa 3. menüden başka bir model seçerek taramayı tekrarlayın.")
+        return
     model = scan_result.get("model")
     if not isinstance(model, str) or not model:
         raise ValueError("Tarama sonucunda model adı bulunmuyor.")

@@ -164,7 +164,10 @@ def _title_slide(presentation):
     )
     _box(slide, 0.86, 4.38, 1.45, 0.08, TEAL, rounded=False)
     _text(slide, "Python  •  Ollama  •  LangChain  •  BM25 RAG", 0.86, 4.67, 7.8, 0.4, size=13, color=WHITE, bold=True)
-    _text(slide, "Türkçe sunum  |  Gereksinimler, mimari, güvenlik ve test", 0.86, 5.24, 8.3, 0.35, size=12, color=RGBColor(185, 202, 220))
+    _text(slide, "Sohbet arayüzü  |  Uçtan uca akış  |  Onaylı remediation ve PR", 0.86, 5.24, 8.3, 0.35, size=12, color=RGBColor(185, 202, 220))
+    logo = ROOT / "docs/assets/branding/softtech-logo.png"
+    if logo.is_file():
+        slide.shapes.add_picture(str(logo), Inches(10.55), Inches(5.55), width=Inches(1.75))
     _footer(slide, 1, dark=True)
 
 
@@ -245,7 +248,7 @@ def _requirements_slides(presentation):
 def _architecture_slides(presentation):
     slide = _new_slide(presentation)
     _header(slide, "06  •  Mimari", "Sorumlulukları ayrılmış, yerel çalışan bileşenler", "Terminal arayüzü kullanıcıyı yönlendirir; araçlar belirli girdilerle sınırlı işler yapar.")
-    _card(slide, 0.75, 2.0, 3.7, 1.65, "Kullanıcı arayüzü", ["Türkçe terminal menüsü", "Yapılandırma ve onay istemleri"], TEAL)
+    _card(slide, 0.75, 2.0, 3.7, 1.65, "Sohbet arayüzü", ["Türkçe doğal dil etkileşimi", "Proje promptu ve onay istemleri"], TEAL)
     _card(slide, 4.82, 2.0, 3.7, 1.65, "LangChain akışı", ["Tahmin → onay → tarama", "Rapor → düzeltme planı"], CYAN)
     _card(slide, 8.89, 2.0, 3.7, 1.65, "Yerel servisler", ["Ollama • BM25", "Git • test araçları • gh"], GOLD)
     _card(slide, 0.75, 4.05, 3.7, 1.65, "Girdi", ["PDF'ler ve JSON bağlantıları", "Kullanıcının seçtiği depo"], CYAN, BLUE_PALE)
@@ -315,7 +318,7 @@ def _installation_slides(presentation):
         ("Hazırla", ".venv ve proje paketleri"),
         ("Doğrula", "JSON ve çalışma klasörleri"),
         ("Seçim sun", "Ollama • belge • depo"),
-        ("Çalıştır", "mevzuat-agent Türkçe menüsü"),
+        ("Sohbeti başlat", "mevzuat-agent • yerel Ollama"),
     ]
     for index, (title, detail) in enumerate(steps):
         row, col = divmod(index, 3)
@@ -351,12 +354,12 @@ def _testing_slides(presentation):
     slide = _new_slide(presentation)
     _header(slide, "13  •  Doğrulama", "Otomatik testler akış sınırlarını doğrular", "Testler kodun mevzuata uygunluğunu değil, yazılım davranışını ve onay kapılarını denetler.")
     _box(slide, 0.8, 2.0, 3.35, 2.55, NAVY)
-    _text(slide, "44", 1.02, 2.25, 2.9, 0.9, size=44, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
+    _text(slide, "56", 1.02, 2.25, 2.9, 0.9, size=44, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
     _text(slide, "geçen otomatik test", 1.05, 3.25, 2.85, 0.38, size=15, color=CYAN, bold=True, align=PP_ALIGN.CENTER)
     _text(slide, "13 uyarı: bağımlılık deprecation uyarıları", 1.02, 3.83, 2.9, 0.36, size=9, color=RGBColor(213, 225, 238), align=PP_ALIGN.CENTER)
     _card(slide, 4.5, 2.0, 3.78, 2.55, "Kapsanan alanlar", ["JSON ve RAG hazırlama", "Model tahmini/onay akışı", "Kanıt ve rapor üretimi", "Remediation, test ve PR"], TEAL)
     _card(slide, 8.62, 2.0, 3.78, 2.55, "Test yaklaşımı", ["Onaysız adımların reddi", "İzole geçici Git depoları", "Sahte GitHub yanıtları", "Sabit test araçları ve timeout"], CYAN)
-    _text(slide, "Bu 44 test yazılım davranışını doğrular; gerçek model çıktısı ve sentetik düzeltme kabul testleri ayrıca sınanmıştır.", 0.95, 5.0, 11.2, 0.42, size=11, color=MUTED, align=PP_ALIGN.CENTER)
+    _text(slide, "56 otomatik test yazılım davranışını doğrular; gerçek model çıktısı hukuki doğruluğu kanıtlamaz.", 0.95, 5.0, 11.2, 0.42, size=11, color=MUTED, align=PP_ALIGN.CENTER)
     _footer(slide, 14)
 
     slide = _new_slide(presentation)
@@ -367,23 +370,23 @@ def _testing_slides(presentation):
     _text(slide, "YALNIZCA TEST", 9.03, 2.35, 3.22, 0.5, size=19, color=NAVY, bold=True, align=PP_ALIGN.CENTER)
     _text(slide, "Gerçek mevzuat ihlali değildir.\nTEST_FIXTURE_NOT_LAW", 9.03, 3.05, 3.22, 0.62, size=13, color=INK, align=PP_ALIGN.CENTER)
     _box(slide, 0.82, 4.72, 11.68, 0.92, BLUE_PALE)
-    _text(slide, "Test fixture deposu GitHub'da özeldir. Sentetik kodu üretim sistemlerinde kullanmayın.", 1.08, 4.94, 11.1, 0.4, size=14, color=NAVY, bold=True, align=PP_ALIGN.CENTER)
+    _text(slide, "Fixture yerel ve deterministiktir; sentetik kodu üretim sistemlerinde kullanmayın.", 1.08, 4.94, 11.1, 0.4, size=14, color=NAVY, bold=True, align=PP_ALIGN.CENTER)
     _footer(slide, 15)
 
     slide = _new_slide(presentation)
-    _header(slide, "15  •  Gerçek uçtan uca deneme", "Model havuzu test edildi; yanıt kalitesi değişti", "2026-10-29: resmî bağlantılardaki PDF'ler indirildi, yerel BM25 indeksi kuruldu ve özel sentetik demo deposu klonlandı.")
+    _header(slide, "15  •  Gerçek uçtan uca deneme", "Model hatası ve deterministik demo ayrı raporlandı", "Gerçek model kalitesi ile akışın yazılım testleri birbirinden ayrılır.")
     _card(
         slide,
         0.78,
         2.02,
         3.72,
         2.58,
-        "Girdi ve hazırlık",
+        "Mevzuat hazırlığı",
         [
             "2 mevzuat PDF'i indirildi",
             "146 RAG parçası üretildi",
-            "Test deposu klonlandı",
-            "2 kaynak dosyası • 6 eşleşen parça",
+            "Yerel BM25 indeksi",
+            "Demo fixture deposu hazır",
         ],
         TEAL,
     )
@@ -393,12 +396,12 @@ def _testing_slides(presentation):
         2.02,
         3.72,
         2.58,
-        "Hızlı modeller",
+        "Gerçek model denemesi",
         [
-            "llama3.2:1b · 65,60 token/sn · ~55 sn",
-            "2 dosyada JSON yanıtı bozuk",
-            "qwen3:4b · 28,25 token/sn · ~128 sn",
-            "2 dosyada boş yanıt",
+            "llama3.2:1b yanıtı geçersiz JSON",
+            "Model taraması: 0 doğrulanmış dosya",
+            "Gerçek remediation durduruldu",
+            "Hata raporda açıkça gösterildi",
         ],
         CYAN,
     )
@@ -408,17 +411,17 @@ def _testing_slides(presentation):
         2.02,
         3.72,
         2.58,
-        "Gemma sonucu",
+        "Deterministik E2E",
         [
-            "gemma3:4b · 25,31 token/sn · ~143 sn",
-            "2/2 dosya tarandı",
-            "1 adet LOW bulgu üretildi",
-            "Atıf/kanıt var; açıklama spekülatif",
+            "Fixture üzerinden 2 sentetik bulgu",
+            "Remediation izole worktree'de",
+            "pytest: 2 geçti",
+            "PR yanıtı yerel mock ile doğrulandı",
         ],
         GOLD,
     )
     _box(slide, 0.78, 4.92, 11.76, 0.98, GOLD_PALE)
-    _text(slide, "Önemli: hız tahmini çıktı kalitesini ölçmüyor. Gemma bulgusu uzman doğrulaması gerektiriyor; hızlı modellerin hatalı/boş çıktısı tarama raporlarında görünür.", 1.03, 5.1, 11.23, 0.58, size=12, color=NAVY, bold=True, align=PP_ALIGN.CENTER)
+    _text(slide, "Canlı model taraması başarısız olduğunda sentetik rapor yalnızca demo/test amacıyla ayrı üretilir; gerçek tarama veya PR girdisi olmaz.", 1.03, 5.1, 11.23, 0.58, size=12, color=NAVY, bold=True, align=PP_ALIGN.CENTER)
     _footer(slide, 16)
 
     slide = _new_slide(presentation)
@@ -435,20 +438,20 @@ def _testing_slides(presentation):
 
 def _scope_and_conclusion(presentation):
     slide = _new_slide(presentation)
-    _header(slide, "15  •  Güvenlik ve mahremiyet", "Güvenli varsayılanlar ve açık sınırlar", "Kod ve mevzuat bağlamı yerel Ollama'ya gider; tarama akışı bulguları uzman incelemesine sunar.")
+    _header(slide, "20  •  Güvenlik ve mahremiyet", "Güvenli varsayılanlar ve açık sınırlar", "Kod ve mevzuat bağlamı yerel Ollama'ya gider; tarama akışı bulguları uzman incelemesine sunar.")
     _card(slide, 0.78, 2.0, 5.7, 2.2, "Kontroller", ["Klonlama ve tarama kullanıcı onaylıdır", "Düzeltme ayrı worktree'de uygulanır", "Test ve PR ayrı onay ister", "PR için yalnız beklenen dosyalar seçilir"], TEAL)
     _card(slide, 6.75, 2.0, 5.7, 2.2, "Kullanım sorumluluğu", ["İndirilen kaynağın güncelliğini denetleyin", "Yalnız güvendiğiniz projelerde test çalıştırın", "Model bulgusunu hukuk uzmanına doğrulatın", "Gerçek depoda yedek ve temiz çalışma alanı kullanın"], GOLD)
     _box(slide, 0.78, 4.68, 11.67, 0.98, GOLD_PALE)
     _text(slide, "Otomasyon kanıtı düzenler; hukuki görüş, kesin uygunluk kararı veya güvenlik sertifikası vermez.", 1.02, 4.92, 11.15, 0.44, size=14, color=NAVY, bold=True, align=PP_ALIGN.CENTER)
-    _footer(slide, 18)
+    _footer(slide, 20)
 
     slide = _new_slide(presentation)
-    _header(slide, "16  •  Gereksinim izleme", "Ödev maddeleri ve uygulamadaki karşılıkları", "Maddeler, konuşmada verilen dokuz gereksinim üzerinden eşleştirilmiştir.")
+    _header(slide, "21  •  Gereksinim izleme", "Ödev maddeleri ve uygulamadaki karşılıkları", "Maddeler, konuşmada verilen dokuz gereksinim üzerinden eşleştirilmiştir.")
     rows = [
-        ("1", "Python/PyCharm • Ollama • LangChain", "Proje paketi, yerel model ve Runnable zinciri"),
+        ("1", "Python/PyCharm • sohbet • Ollama • LangChain", "Proje promptu, yerel sohbet ve Runnable zinciri"),
         ("2", "mevzuat_link.json'dan indirme", "download_mevzuat aracı"),
         ("3", "Orta boy RAG parçaları", "1.200 karakter • 200 örtüşme • BM25"),
-        ("4", "Onaylı depo klonlama", "clone_repositories + menü onayı"),
+        ("4", "Onaylı depo klonlama", "clone_repositories + sohbet/pipeline onayı"),
         ("5", "Model havuzu tahmini", "Kurulu modelleri ölç • hızlıyı öner"),
         ("6", "Tahmin sonrası onaylı tarama", "Seçilen model/kapsam onayı"),
         ("7", "MD ve HTML tarama raporu", "Bulgular, kanıt, dosya sonucu, sınır"),
@@ -475,25 +478,25 @@ def _scope_and_conclusion(presentation):
                 paragraph.font.size = Pt(11 if row_index else 12)
                 paragraph.font.bold = row_index == 0
                 paragraph.font.color.rgb = WHITE if row_index == 0 else INK
-    _footer(slide, 19)
+    _footer(slide, 21)
 
     slide = _new_slide(presentation)
-    _header(slide, "17  •  Bilinen sınırlamalar", "Tamamlanan iş ve sonraki geliştirme alanları", "Kapsamı dürüstçe ayırmak, model çıktısına gereğinden fazla güvenilmesini önler.")
+    _header(slide, "22  •  Bilinen sınırlamalar", "Tamamlanan iş ve sonraki geliştirme alanları", "Kapsamı dürüstçe ayırmak, model çıktısına gereğinden fazla güvenilmesini önler.")
     _card(slide, 0.78, 2.02, 5.72, 2.65, "Uygulanan", ["PDF indirme ve sayfa metnini parçalama", "BM25 ile yerel mevzuat araması", "Onaylı tarama ve MD/HTML rapor", "İzole düzeltme, test ve PR akışları"], TEAL)
     _card(slide, 6.72, 2.02, 5.72, 2.65, "Henüz yok / garanti edilmez", ["OCR, vektör arama ve belge sürüm takibi", "Hukuki doğruluğun otomatik kanıtlanması", "Web arayüzü ve devam ettirilebilir işler", "Gerçek GitHub PR ile uçtan uca canlı doğrulama"], GOLD)
     _box(slide, 0.78, 5.12, 11.66, 0.82, GOLD_PALE)
     _text(slide, "Sonraki adımlar: PDF rubriğini doğrula • gerçek mevzuat örnekleriyle uzman değerlendirmesi yap • gerçek PR akışını yetkili test deposunda dene.", 1.0, 5.29, 11.2, 0.45, size=11, color=NAVY, bold=True, align=PP_ALIGN.CENTER)
-    _footer(slide, 20)
+    _footer(slide, 22)
 
     slide = _new_slide(presentation)
-    _header(slide, "18  •  Kısa demo", "Uygulamayı sunumda nasıl gösteririm?", "Sentetik test deposunda, dış sisteme yan etki oluşturmadan ana akışı sergileyin.")
+    _header(slide, "23  •  Kısa demo", "Uygulamayı sunumda nasıl gösteririm?", "Sentetik test deposunda, dış sisteme yan etki oluşturmadan ana akışı sergileyin.")
     demo = [
-        ("01", "Kurulumu başlat", "Kurulum.command → Python ve paket kontrolü"),
-        ("02", "Menüyü aç", "mevzuat-agent → yapılandırma kontrolü"),
-        ("03", "Demo depoyu seç", "Yalnızca test için hazırlanmış sentetik depo"),
-        ("04", "Tahmini gör", "Kurulu Ollama modelleri ve süreler"),
-        ("05", "Raporu incele", "Kaynak/kanıt ve tarama kapsamı"),
-        ("06", "Düzeltmeyi göster", "İzole dal ve diff; PR onayı verme"),
+        ("01", "Sohbeti başlat", "mevzuat-agent → yerel Ollama modeli"),
+        ("02", "Kapsamı seç", "1 veya 2; * tüm mevzuatlar"),
+        ("03", "Pipeline'ı sürdür", "devam → sıradaki önerilen adım"),
+        ("04", "Sentetik demo", "demo1 → beş deterministik fixture bulgusu"),
+        ("05", "Raporu incele", "JSON/Markdown/HTML ve sınırlar"),
+        ("06", "Remediation / PR", "Diff ve test; PR için ayrı onay gerekir"),
     ]
     for index, (number, title, detail) in enumerate(demo):
         row, col = divmod(index, 2)
@@ -503,7 +506,7 @@ def _scope_and_conclusion(presentation):
         _text(slide, number, x + 0.17, y + 0.22, 0.54, 0.32, size=13, color=TEAL, bold=True)
         _text(slide, title, x + 0.85, y + 0.15, 4.4, 0.32, size=14, color=NAVY, bold=True)
         _text(slide, detail, x + 0.85, y + 0.56, 4.4, 0.3, size=10, color=MUTED)
-    _footer(slide, 21)
+    _footer(slide, 23)
 
     slide = _new_slide(presentation, NAVY)
     _text(slide, "ÖZET", 0.86, 0.82, 3.0, 0.32, size=11, color=CYAN, bold=True)
@@ -511,7 +514,124 @@ def _scope_and_conclusion(presentation):
     _text(slide, "MevzuatAgent; yerel LLM ve RAG'i kontrollü kod inceleme, raporlama ve düzeltme akışına bağlar.", 0.9, 3.62, 10.7, 0.72, size=17, color=RGBColor(215, 227, 240))
     _box(slide, 0.9, 4.76, 11.25, 1.1, NAVY_LIGHT)
     _text(slide, "Kaynak notu: Bu sunum konuşmada verilen dokuz gereksinime göre hazırlanmıştır. Ekli dosya yalnızca PDF simgesi olarak erişilebildi; PDF içeriği ve rubriği doğrulanamadı.", 1.15, 4.94, 10.75, 0.68, size=11, color=WHITE)
-    _footer(slide, 22, dark=True)
+    _footer(slide, 24, dark=True)
+
+
+def _end_to_end_evidence_slides(presentation):
+    slide = _new_slide(presentation)
+    _header(
+        slide,
+        "18  •  Sohbetten rapora uçtan uca akış",
+        "Kullanıcı sohbeti yönlendirir; pipeline her adımda onay ister",
+        "Sistem promptu proje kapsamını korur; Ollama yanıtı ve pipeline işlemleri birbirinden ayrıdır.",
+    )
+    flow = [
+        ("Sohbet", "Soru sor\nveya devam yaz"),
+        ("Kapsam", "Mevzuat seç\n1 • 2 • tümü"),
+        ("Hazırlık", "PDF → RAG\nRepo → klon"),
+        ("Tahmin", "Model hızı\nToken • süre"),
+        ("Tarama", "Kapsam ve model\nkullanıcı onayı"),
+        ("Rapor", "JSON • MD\nHTML • bulgu"),
+    ]
+    for index, (title, detail) in enumerate(flow):
+        x = 0.72 + index * 2.08
+        _box(slide, x, 2.15, 1.78, 1.68, WHITE)
+        _text(slide, f"0{index + 1}", x + 0.15, 2.32, 0.4, 0.24, size=10, color=TEAL, bold=True)
+        _text(slide, title, x + 0.15, 2.67, 1.48, 0.32, size=14, color=NAVY, bold=True)
+        _text(slide, detail, x + 0.15, 3.1, 1.48, 0.5, size=10, color=MUTED)
+        if index < len(flow) - 1:
+            _text(slide, "→", x + 1.8, 2.78, 0.26, 0.32, size=17, color=TEAL, bold=True, align=PP_ALIGN.CENTER)
+    _box(slide, 0.82, 4.28, 11.7, 1.15, BLUE_PALE)
+    _text(slide, "Deterministik demo", 1.08, 4.5, 2.1, 0.3, size=14, color=NAVY, bold=True)
+    _text(
+        slide,
+        "Model taraması JSON hatası veya bulgusuz sonuç verirse demo1/demo2 için ayrı sentetik rapor üretilebilir. Bu rapor gerçek mevzuat tespiti ve remediation girdisi değildir.",
+        3.12,
+        4.43,
+        9.0,
+        0.6,
+        size=12,
+        color=INK,
+    )
+    _text(slide, "İşlem adımları: sohbet komutu → pipeline önerisi → açık kullanıcı onayı → çıktı/rapor → sonraki adım.", 1.02, 5.82, 11.15, 0.35, size=12, color=MUTED, bold=True, align=PP_ALIGN.CENTER)
+    _footer(slide, 18)
+
+    slide = _new_slide(presentation)
+    _header(
+        slide,
+        "19  •  Remediation, kod farkı ve PR",
+        "İlk iki bulgu: diff → izole dal → test → PR",
+        "Aşağıdaki değişiklik sentetik E2E fixture'ından alınmıştır; mevzuat düzeltmesi veya gerçek GitHub PR'ı değildir.",
+    )
+    _box(slide, 0.78, 1.95, 7.28, 3.85, NAVY)
+    _text(slide, "ÖNCE  (payment_rules.py)", 1.05, 2.15, 6.7, 0.28, size=11, color=RED, bold=True, font="Aptos Mono")
+    _text(
+        slide,
+        "def mask_reference(value, visible=4):\n    return value\n\ndef is_positive_amount(amount):\n    return amount >= 0",
+        1.05,
+        2.52,
+        6.7,
+        1.1,
+        size=12,
+        color=WHITE,
+        font="Aptos Mono",
+    )
+    _text(slide, "SONRA  (yalnızca kullanıcı onayıyla)", 1.05, 3.82, 6.7, 0.28, size=11, color=TEAL, bold=True, font="Aptos Mono")
+    _text(
+        slide,
+        "def mask_reference(value, visible=4):\n    return \"*\" * max(0, len(value)-visible) + value[-visible:]\n\ndef is_positive_amount(amount):\n    return amount > 0",
+        1.05,
+        4.18,
+        6.7,
+        1.32,
+        size=10,
+        color=WHITE,
+        font="Aptos Mono",
+    )
+    _card(
+        slide,
+        8.38,
+        1.98,
+        4.15,
+        1.02,
+        "1 • İncele ve uygula",
+        ["En yüksek iki bulgu", "Ayrı worktree / branch"],
+        TEAL,
+    )
+    _card(
+        slide,
+        8.38,
+        3.18,
+        4.15,
+        1.02,
+        "2 • Testi onayla",
+        ["Test raporu MD/HTML", "Başarısızsa PR durur"],
+        CYAN,
+    )
+    _card(
+        slide,
+        8.38,
+        4.38,
+        4.15,
+        1.02,
+        "3 • PR için son onay",
+        ["Commit + push + gh PR", "Her adım ayrı izin"],
+        GOLD,
+    )
+    _box(slide, 0.82, 6.04, 11.7, 0.58, GOLD_PALE)
+    _text(
+        slide,
+        "E2E kanıtı: test geçti; push yerel bare remote'a, PR yanıtı mock gh'ye yapıldı. Gerçek GitHub PR açılmadı.",
+        1.0,
+        6.15,
+        11.2,
+        0.32,
+        size=11,
+        color=NAVY,
+        bold=True,
+        align=PP_ALIGN.CENTER,
+    )
+    _footer(slide, 19)
 
 
 def create_presentation():
@@ -529,6 +649,7 @@ def create_presentation():
     _remediation_slides(presentation)
     _installation_slides(presentation)
     _testing_slides(presentation)
+    _end_to_end_evidence_slides(presentation)
     _scope_and_conclusion(presentation)
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)

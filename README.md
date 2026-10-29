@@ -292,39 +292,21 @@ onaylayın.
 
 ## Ödev sunumu
 
-Dokuz maddelik proje kapsamını, mimariyi, kullanıcı onaylarını, sentetik test
-verisini, doğrulama sonuçlarını ve bilinen sınırlamaları anlatan Türkçe sunum:
+24 slaytlık Türkçe sunum; sohbet başlangıcından mevzuat seçimi, RAG, depo,
+tahmin/tarama, raporlar, remediation diff'i, test ve PR onayına kadar uçtan uca
+akışı kapsar. İçindeki kod farkı sentetik E2E fixture'ıdır; PR provası yerel
+bare remote ve mock `gh` ile yapılmıştır, gerçek GitHub PR'ı açılmamıştır.
 
 - [MevzuatAgent_Odev_Sunumu_TR.pptx](docs/MevzuatAgent_Odev_Sunumu_TR.pptx)
 - Kaynak üretici: `scripts/create_presentation.py`
 - Yeniden üretmek için: `.venv/bin/python scripts/create_presentation.py`
+- [Uçtan uca tarama raporu](docs/examples/e2e_tarama_raporu.md)
+- [Remediation kod farkı](docs/examples/e2e_remediation_raporu.md)
+- [Test ve PR provasının doğrulama özeti](docs/examples/e2e_dogrulama_ozeti.md)
 
 Sunum, konuşmada verilen dokuz gereksinime dayanır. Ekli PDF dosyası bu çalışma
 ortamında yalnızca genel bir PDF simgesi olarak göründüğünden içindeki rubrik
 doğrulanamamıştır; PDF şartlarıyla birebir eşleştirme yapıldığı iddia edilmez.
-
-### MevzuAI saha raporlarıyla güncellenmiş ekler
-
-Sağlanan `MevzuAI_Sunum.pptx` ve 24.10.2026 tarihli iki HTML raporunun
-özetini içeren ek materyaller:
-
-- [Güncel MevzuAI sunumu](docs/MevzuAI_Sunum_Guncel.pptx)
-- [Birleşik risk ve remediation özeti — HTML](docs/MevzuAI_Birlesik_Risk_ve_Remediation_Ozeti.html)
-- [Birleşik risk ve remediation özeti — Markdown](docs/MevzuAI_Birlesik_Risk_ve_Remediation_Ozeti.md)
-- [Kurulum, test deposu, diff ve PR prova görselleri](docs/assets/mevuai_evidence/)
-
-Tekrar üretmek için üç kaynak dosyayı `data/temp_reference/` klasörüne koyup
-`.venv/bin/python scripts/update_mevzuai_materials.py` çalıştırın. Kaynak
-klasör `data/` altında olduğundan Git'e eklenmez; üretilen sunum ve özetler
-`docs/` altında kalır. Sunumdaki kurulum görseli `install.sh` akışının şematik
-gösterimidir; test deposu/diff/test görselleri yerel fixture kayıtlarından
-üretilmiştir. PR görseli yalnızca yerel mock provayı gösterir; gerçek GitHub
-PR'ı değildir. Güvenli paylaşım için kaynak raporlardaki credential ve token
-örnekleri yeni çıktılara aktarılmaz. Özet, kaynak raporların beyanlarını
-düzenler; bağımsız yeniden tarama veya test sonucu değildir.
-Softtech logo dosyası resmî web sitesindeki
-[logo SVG'sinden](https://softtech.com.tr/dosyalar/header/companyLogo.svg)
-alınmıştır; açık zemin için koyu yazılı sürüm aynı dosyadan üretilmiştir.
 
 ## Yapılandırma dosyaları
 

@@ -24,6 +24,7 @@ ASSETS_DIR = ROOT / "docs/assets/mevuai_evidence"
 BRAND_SVG = ROOT / "docs/assets/branding/softtech-logo.svg"
 BRAND_PNG = ROOT / "docs/assets/branding/softtech-logo.png"
 BRAND_LIGHT_SVG = ROOT / "docs/assets/branding/softtech-logo-light-background.svg"
+BRAND_LIGHT_PNG = ROOT / "docs/assets/branding/softtech-logo-light-background.png"
 
 NAVY = RGBColor(17, 34, 64)
 NAVY_LIGHT = RGBColor(29, 54, 91)
@@ -394,7 +395,21 @@ def _ensure_light_background_logo() -> Path:
         'fill="white"', 'fill="#112240"'
     )
     BRAND_LIGHT_SVG.write_text(light_logo, encoding="utf-8")
-    return BRAND_LIGHT_SVG
+    subprocess.run(
+        [
+            "sips",
+            "-s",
+            "format",
+            "png",
+            str(BRAND_LIGHT_SVG),
+            "--out",
+            str(BRAND_LIGHT_PNG),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return BRAND_LIGHT_PNG
 
 
 def _set_shape_text(shape, text: str, size: int, color: RGBColor, bold: bool = False):
@@ -644,18 +659,22 @@ def _add_evidence_slides(presentation, captures: dict[str, Path]):
         )
 
 
-def _add_softtech_branding(presentation, logo_path: Path):
+def _add_softtech_branding(
+    presentation,
+    dark_background_logo: Path,
+    light_background_logo: Path,
+):
     slides = list(presentation.slides)
     for slide in slides[1:]:
         slide.shapes.add_picture(
-            str(logo_path),
+            str(light_background_logo),
             Inches(10.92),
             Inches(6.98),
             width=Inches(1.05),
         )
     if slides:
         slides[0].shapes.add_picture(
-            str(logo_path),
+            str(dark_background_logo),
             Inches(10.05),
             Inches(5.83),
             width=Inches(2.35),
@@ -685,8 +704,11 @@ def main():
     _add_report_slides(presentation)
     captures = _create_evidence_captures()
     _add_evidence_slides(presentation, captures)
-    _add_softtech_branding(presentation, _ensure_softtech_logo())
-    _ensure_light_background_logo()
+    _add_softtech_branding(
+        presentation,
+        _ensure_softtech_logo(),
+        _ensure_light_background_logo(),
+    )
     OUTPUT_PRESENTATION.parent.mkdir(parents=True, exist_ok=True)
     presentation.save(str(OUTPUT_PRESENTATION))
 

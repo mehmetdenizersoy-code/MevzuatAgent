@@ -539,8 +539,12 @@ kod kanıtı, mevzuat kaynağı ve sınırlamalar yer alır. Bulgu çıkmaması
 uyumluluğun kanıtlandığı anlamına gelmez. HTML raporu kullanıcı/kod kaynaklı
 değerleri HTML olarak kaçışlayarak yazar.
 
-Gerçek depo çalıştırmasından alınan terminal ekran görüntüleri ve raporların
-HTML görselleri, canlı tarama tamamlandıktan sonra bu bölüme eklenecektir.
+Başlangıç akışının aşağıdaki temsili görünümü, paylaşılan terminal metninden
+hazırlanmıştır; gerçek ekran görüntüsü değildir. Canlı depo taraması ve HTML
+rapor görselleri daha sonra eklenecektir.
+
+![MevzuatAgent başlangıç terminal akışının temsili görünümü](docs/images/startup-terminal-temsili.svg)
+
 Ödeme alanındaki bir kod örneği tek başına mevzuat bulgusu sayılmaz; ilgili
 mevzuat metni ve kod kanıtı uzman tarafından doğrulanmalıdır.
 

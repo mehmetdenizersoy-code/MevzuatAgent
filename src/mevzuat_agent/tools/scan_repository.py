@@ -207,7 +207,7 @@ def scan_repository(
                     path=relative_path,
                     status="error",
                     findings=(),
-                    error=f"Local model scan failed ({exc.__class__.__name__}): {exc}",
+                    error=f"Ollama model scan failed ({exc.__class__.__name__}): {exc}",
                 )
             )
             continue
@@ -229,7 +229,9 @@ def scan_repository(
     if any(file_result.status == "scanned_with_rejections" for file_result in file_results):
         limitations.append("One or more model findings failed evidence validation and were excluded.")
     if any(file_result.status == "no_relevant_mevzuat" for file_result in file_results):
-        limitations.append("Files without retrieved mevzuat context were not sent to Ollama.")
+        limitations.append(
+            "Files without retrieved mevzuat context were not sent to the model."
+        )
 
     result = RepositoryScanResult(
         repository=str(repository),
@@ -262,6 +264,7 @@ def _ask_ollama(
     source_code: str,
     rag_index_path: Path,
 ) -> str:
+    endpoint = ollama_url
     analysis_system_prompt = (
         "Sen savunma amaçlı bir mevzuat-kod inceleme yardımcısısın. Yalnızca "
         "verilen kaynak kodu ile Türkçe mevzuat parçalarının açıkça desteklediği "
@@ -411,17 +414,20 @@ def _ask_ollama(
         if ready_for_final:
             request_payload["format"] = response_schema
         request_data = json.dumps(request_payload, ensure_ascii=False).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
         request = Request(
-            ollama_url,
+            endpoint,
             data=request_data,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
         )
         try:
             with urlopen(request, timeout=timeout_seconds) as response:
                 payload = json.loads(response.read().decode("utf-8"))
         except HTTPError as exc:
             detail = exc.read(500).decode("utf-8", errors="replace").strip()
-            raise ValueError(f"Ollama HTTP {exc.code}: {detail or exc.reason}") from exc
+            raise ValueError(
+                f"Ollama HTTP {exc.code}: {detail or exc.reason}"
+            ) from exc
         if payload.get("error"):
             raise ValueError(payload["error"])
 
@@ -432,15 +438,24 @@ def _ask_ollama(
         if tool_calls:
             messages.append(message)
             for tool_call in tool_calls:
-                result, tool_name = _run_scan_tool(
-                    tool_call,
-                    source_path=source_path,
-                    source_code=source_code,
-                    rag_index_path=rag_index_path,
-                    mevzuat_context=mevzuat_context,
-                )
+                try:
+                    result, tool_name = _run_scan_tool(
+                        tool_call,
+                        source_path=source_path,
+                        source_code=source_code,
+                        rag_index_path=rag_index_path,
+                        mevzuat_context=mevzuat_context,
+                    )
+                except ValueError as exc:
+                    tool_result: dict[str, str] = {
+                        "role": "tool",
+                        "content": json.dumps({"error": str(exc)}, ensure_ascii=False),
+                    }
+                    messages.append(tool_result)
+                    continue
                 used_tools.add(tool_name)
-                messages.append({"role": "tool", "content": result})
+                tool_result = {"role": "tool", "content": result}
+                messages.append(tool_result)
             continue
 
         if not ready_for_final:

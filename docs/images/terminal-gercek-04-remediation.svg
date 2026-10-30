@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="746" viewBox="0 0 1480 746" role="img" aria-labelledby="title">
+  <title id="title">Remediation önerisi ve izole dalda uygulama</title>
+  <rect width="1480" height="746" rx="14" fill="#10151d"/>
+  <rect width="1480" height="48" rx="14" fill="#252c36"/>
+  <rect y="34" width="1480" height="14" fill="#252c36"/>
+  <circle cx="26" cy="24" r="7" fill="#ff5f57"/>
+  <circle cx="50" cy="24" r="7" fill="#febc2e"/>
+  <circle cx="74" cy="24" r="7" fill="#28c840"/>
+  <text x="740" y="30" text-anchor="middle" fill="#d6dbe2" font-family="Arial, sans-serif" font-size="15">Terminal — MevzuatAgent</text>
+  <text x="30" y="72" fill="#8391a3" font-family="Arial, sans-serif" font-size="13">Remediation önerisi ve izole dalda uygulama · gerçek çalıştırma çıktısı</text>
+  <g font-family="Menlo, Monaco, Consolas, monospace" font-size="15">
+    <text x="30" y="112" fill="#e2e8f0" xml:space="preserve">Yukarıdaki tarama bulgularını ve Markdown/HTML raporlarını incelediniz mi? Onayınızla remediation önerisi hazırlansın </text>
+    <text x="30" y="134" fill="#e2e8f0" xml:space="preserve">   mı? [e/H]: e</text>
+    <text x="30" y="156" fill="#e2e8f0" xml:space="preserve">Ollama en önemli iki bulgu için değişiklik önerisi hazırlıyor.</text>
+    <text x="30" y="178" fill="#e2e8f0" xml:space="preserve">qwen3:4b geçerli öneri üretmedi; gemma3:4b modeli deneniyor.</text>
+    <text x="30" y="200" fill="#e2e8f0" xml:space="preserve">Düzeltme önerisini üreten model: gemma3:4b</text>
+    <text x="30" y="222" fill="#e2e8f0" xml:space="preserve">--- a/payment_rules.py</text>
+    <text x="30" y="244" fill="#e2e8f0" xml:space="preserve">+++ b/payment_rules.py</text>
+    <text x="30" y="266" fill="#e2e8f0" xml:space="preserve">@@ -23,9 +23,9 @@</text>
+    <text x="30" y="288" fill="#e2e8f0" xml:space="preserve"> </text>
+    <text x="30" y="310" fill="#e2e8f0" xml:space="preserve"> def installment_amount(total: float, count: int) -&gt; float:</text>
+    <text x="30" y="332" fill="#e2e8f0" xml:space="preserve">     """Tek taksit tutarını döndürür."""</text>
+    <text x="30" y="354" fill="#fca5a5" xml:space="preserve">-    return total</text>
+    <text x="30" y="376" fill="#86efac" xml:space="preserve">+    return (total * 1.08) / count</text>
+    <text x="30" y="398" fill="#e2e8f0" xml:space="preserve"> </text>
+    <text x="30" y="420" fill="#e2e8f0" xml:space="preserve"> </text>
+    <text x="30" y="442" fill="#e2e8f0" xml:space="preserve"> def normalize_name(name: str) -&gt; str:</text>
+    <text x="30" y="464" fill="#e2e8f0" xml:space="preserve">     """İsim alanını düzenler."""</text>
+    <text x="30" y="486" fill="#fca5a5" xml:space="preserve">-    return name</text>
+    <text x="30" y="508" fill="#86efac" xml:space="preserve">+    return name</text>
+    <text x="30" y="530" fill="#e2e8f0" xml:space="preserve">Yukarıdaki kod değişikliklerini ayrı dalda uygulamayı onaylıyor musunuz? [e/H]: e</text>
+    <text x="30" y="552" fill="#e2e8f0" xml:space="preserve">İzole dal: mevzuatagent/remediation-035be68079</text>
+    <text x="30" y="574" fill="#e2e8f0" xml:space="preserve">Worktree: /Users/denizersoy/PycharmProjects/Final-Proje_MevzuatAgent/data/repositories/mevzuatagent-demo1-findings-</text>
+    <text x="30" y="596" fill="#e2e8f0" xml:space="preserve">   remediation-035be68079</text>
+    <text x="30" y="618" fill="#e2e8f0" xml:space="preserve">Remediation Markdown: /Users/denizersoy/PycharmProjects/Final-</text>
+    <text x="30" y="640" fill="#e2e8f0" xml:space="preserve">   Proje_MevzuatAgent/data/reports/remediation/remediation-035be68079.md</text>
+    <text x="30" y="662" fill="#e2e8f0" xml:space="preserve">Remediation HTML: /Users/denizersoy/PycharmProjects/Final-</text>
+    <text x="30" y="684" fill="#e2e8f0" xml:space="preserve">   Proje_MevzuatAgent/data/reports/remediation/remediation-035be68079.html</text>
+    <text x="30" y="706" fill="#e2e8f0" xml:space="preserve">Remediation akışı raporlar oluşturulduktan sonra tamamlandı.</text>
+  </g>
+</svg>

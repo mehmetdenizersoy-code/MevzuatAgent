@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="614" viewBox="0 0 1480 614" role="img" aria-labelledby="title">
+  <title id="title">qwen3:4b tarama raporu özeti</title>
+  <rect width="1480" height="614" rx="14" fill="#10151d"/>
+  <rect width="1480" height="48" rx="14" fill="#252c36"/>
+  <rect y="34" width="1480" height="14" fill="#252c36"/>
+  <circle cx="26" cy="24" r="7" fill="#ff5f57"/>
+  <circle cx="50" cy="24" r="7" fill="#febc2e"/>
+  <circle cx="74" cy="24" r="7" fill="#28c840"/>
+  <text x="740" y="30" text-anchor="middle" fill="#d6dbe2" font-family="Arial, sans-serif" font-size="15">Terminal — MevzuatAgent</text>
+  <text x="30" y="72" fill="#8391a3" font-family="Arial, sans-serif" font-size="13">qwen3:4b tarama raporu özeti · gerçek çalıştırma çıktısı</text>
+  <g font-family="Menlo, Monaco, Consolas, monospace" font-size="15">
+    <text x="30" y="112" fill="#e2e8f0" xml:space="preserve">Tarama raporu özeti</text>
+    <text x="30" y="134" fill="#e2e8f0" xml:space="preserve">Depo: /Users/denizersoy/PycharmProjects/Final-Proje_MevzuatAgent/data/repositories/mevzuatagent-demo1-findings | </text>
+    <text x="30" y="156" fill="#e2e8f0" xml:space="preserve">   Model: qwen3:4b</text>
+    <text x="30" y="178" fill="#e2e8f0" xml:space="preserve">Kaynak dosyası kapsamı: 1/1; başarıyla taranan: 1</text>
+    <text x="30" y="200" fill="#e2e8f0" xml:space="preserve">Doğrulanmış bulgu: 1</text>
+    <text x="30" y="222" fill="#e2e8f0" xml:space="preserve"></text>
+    <text x="30" y="244" fill="#fca5a5" xml:space="preserve">1. [CRITICAL] Ödeme planı taksit tutarını yanlış hesaplamak (payment_rules.py:24, güven 10/10)</text>
+    <text x="30" y="266" fill="#e2e8f0" xml:space="preserve">   Kod kanıtı: def installment_amount(total: float, count: int) -&gt; float:</text>
+    <text x="30" y="288" fill="#e2e8f0" xml:space="preserve">   Açıklama: Mevzuat 1.5.5464.pdf sayfa 18'de vadeli ödemeler için taksit tutarını hesaplama kuralları belirtilmiştir.</text>
+    <text x="30" y="310" fill="#e2e8f0" xml:space="preserve">       Ancak kodda installment_amount fonksiyonu taksit sayısına göre hesaplamak yerine toplam tutarı döndürmektedir. </text>
+    <text x="30" y="332" fill="#e2e8f0" xml:space="preserve">      Bu, mevzuatın aylık eşit taksitler şeklinde hesaplanmasını engelleyen bir uyumsuzluktur.</text>
+    <text x="30" y="354" fill="#e2e8f0" xml:space="preserve">   Öneri: installment_amount fonksiyonunda toplam tutarı taksit sayısına göre hesaplamak için mevzuatın belirtilen </text>
+    <text x="30" y="376" fill="#e2e8f0" xml:space="preserve">      oranlarla çarpma ve bölme işlemlerini uygulamalı. Örneğin, 12 aylık vade için (total * 1.08) / 12 şeklinde </text>
+    <text x="30" y="398" fill="#e2e8f0" xml:space="preserve">      hesaplanmalıdır.</text>
+    <text x="30" y="420" fill="#e2e8f0" xml:space="preserve">   Mevzuat: 001_1.5.5464.pdf, sayfa 18</text>
+    <text x="30" y="442" fill="#e2e8f0" xml:space="preserve">   Mevzuat alıntısı: ... aylık eşit taksitler şeklinde ödenecek borç tutarı; a) 6 aylık vade için 1,04, b) 12 aylık </text>
+    <text x="30" y="464" fill="#e2e8f0" xml:space="preserve">      vade için 1,08, c) 24 aylık vade için 1,18, d) 36 aylık vade için 1,26, ile çarpılarak hesaplanacak tutarın ay </text>
+    <text x="30" y="486" fill="#e2e8f0" xml:space="preserve">      sayısına bölünmesi suretiyle hesaplanır.</text>
+    <text x="30" y="508" fill="#e2e8f0" xml:space="preserve">Tarama Markdown: /Users/denizersoy/PycharmProjects/Final-Proje_MevzuatAgent/data/reports/scans/mevzuatagent-</text>
+    <text x="30" y="530" fill="#e2e8f0" xml:space="preserve">   demo1-findings_9754d83b.md</text>
+    <text x="30" y="552" fill="#e2e8f0" xml:space="preserve">Tarama HTML: /Users/denizersoy/PycharmProjects/Final-Proje_MevzuatAgent/data/reports/scans/mevzuatagent-</text>
+    <text x="30" y="574" fill="#e2e8f0" xml:space="preserve">   demo1-findings_9754d83b.html</text>
+  </g>
+</svg>

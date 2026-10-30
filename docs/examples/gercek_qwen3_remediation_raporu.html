@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Düzeltme Diff Raporu</title>
+<style>
+* { box-sizing: border-box; }
+body { font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 1120px; margin: 0 auto; padding: 32px 22px 56px; color: #24344a; background: #f3f6fa; }
+main { background: white; border: 1px solid #e1e7ef; border-radius: 18px; padding: 30px; box-shadow: 0 14px 36px #152b481c; }
+h1 { color: #16345c; margin-top: 0; font-size: clamp(24px, 4vw, 34px); letter-spacing: -.03em; }
+.notice { color: #59400a; background: #fff4d6; border: 1px solid #f3dfa9; border-left: 4px solid #d99a00; padding: 13px 15px; border-radius: 8px; }
+pre { overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: #e8eff8; background: #172b46; padding: 18px; border-radius: 10px; }
+code { overflow-wrap: anywhere; }
+@media (max-width: 640px) { body { padding: 16px 12px 32px; } main { padding: 18px; } }
+</style>
+</head>
+<body><main>
+<h1>Düzeltme Diff Raporu</h1>
+<p class="notice">Bu diff, değişikliğin mevzuata uygun olduğunu kanıtlamaz.</p>
+<p><strong>Kaynak depo:</strong> /Users/denizersoy/PycharmProjects/Final-Proje_MevzuatAgent/data/repositories/mevzuatagent-demo1-findings</p>
+<p><strong>İzole çalışma alanı:</strong> /Users/denizersoy/PycharmProjects/Final-Proje_MevzuatAgent/data/repositories/mevzuatagent-demo1-findings-remediation-035be68079</p>
+<p><strong>Dal:</strong> mevzuatagent/remediation-035be68079</p>
+<p>Değişiklikler ayrı worktree'de uygulanmıştır; otomatik olarak commit edilmemiş veya PR açılmamıştır.</p>
+<h2>Kod farkı</h2>
+<pre>diff --git a/payment_rules.py b/payment_rules.py
+index 73d3e64..ba8392d 100644
+--- a/payment_rules.py
++++ b/payment_rules.py
+@@ -23,9 +23,9 @@ def is_expired(
+ 
+ def installment_amount(total: float, count: int) -&gt; float:
+     &quot;&quot;&quot;Tek taksit tutarını döndürür.&quot;&quot;&quot;
+-    return total
++    return (total * 1.08) / count
+ 
+ 
+ def normalize_name(name: str) -&gt; str:
+     &quot;&quot;&quot;İsim alanını düzenler.&quot;&quot;&quot;
+-    return name
++    return name
+\ No newline at end of file
+</pre>
+</main></body>
+</html>

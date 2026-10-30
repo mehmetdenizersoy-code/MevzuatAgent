@@ -96,15 +96,17 @@ def build_scan_workflow(
         }
 
     def estimate(inputs: dict[str, Any]) -> dict[str, Any]:
-        pool = estimate_function(
-            inputs["repositories"],
-            rag_index_path=inputs["rag_index_path"],
-            max_files=inputs["max_files"],
-        )
+        estimate_kwargs = {
+            "rag_index_path": inputs["rag_index_path"],
+            "max_files": inputs["max_files"],
+        }
+        pool = estimate_function(inputs["repositories"], **estimate_kwargs)
         if pool.scan.errors:
             raise RuntimeError("Tarama kapsamı tahmin edilemedi: " + "; ".join(pool.scan.errors))
         if not pool.models or pool.recommended_model is None:
-            raise RuntimeError("Ollama model havuzundan kullanılabilir bir model önerilmedi")
+            raise RuntimeError(
+                "Ollama model havuzundan kullanılabilir bir model önerilmedi"
+            )
         return {**inputs, "estimate": pool}
 
     def approve(inputs: dict[str, Any]) -> dict[str, Any]:
@@ -143,13 +145,13 @@ def build_scan_workflow(
                     f"Tahminden sonra depo değişti; tarama durduruldu: {repository}"
                 )
             output_path = output_dir / f"{repository.name}_{_path_id(repository)}.json"
-            scan_result = scan_function(
-                repository,
-                max_files=inputs["max_files"],
-                rag_index_path=inputs["rag_index_path"],
-                model=inputs["selected_model"],
-                output_path=output_path,
-            )
+            scan_kwargs = {
+                "max_files": inputs["max_files"],
+                "rag_index_path": inputs["rag_index_path"],
+                "model": inputs["selected_model"],
+                "output_path": output_path,
+            }
+            scan_result = scan_function(repository, **scan_kwargs)
             markdown_path, html_path = report_function(scan_result.output_path)
             plan_path = None
             if scan_result.findings:

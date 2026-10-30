@@ -55,6 +55,7 @@ from mevzuat_agent.tools.mevzuat_config import (
 from mevzuat_agent.tools.validate_config import validate_config
 from mevzuat_agent.workflows.scan import (
     RepositoryScanArtifacts,
+    ScanApprovalRequest,
     build_scan_workflow,
 )
 
@@ -81,6 +82,7 @@ def test_chat_mevzuat_selection_and_pipeline_intents():
     assert console._parse_mevzuat_selection("Kartlı ödeme ne demek?", links) is None
     assert console._detect_pipeline_request("devam") == "continue"
     assert console._detect_pipeline_request("tarama yap") == "3"
+    assert console._detect_pipeline_request("3. repoyu tara") == "3"
     assert console._detect_pipeline_request("mevzuatagent ne yapar?") is None
 
 
@@ -95,7 +97,7 @@ def test_chat_requires_law_selection_then_runs_requested_next_step(
     executed = []
     monkeypatch.setattr(console, "_next_pipeline_step", lambda: ("1", "RAG hazırlama"))
     monkeypatch.setattr(console, "_run_pipeline_step", executed.append)
-    answers = iter(("n", "n", "devam", "1", "devam", "0"))
+    answers = iter(("n", "n", "n", "devam", "1", "devam", "0"))
     monkeypatch.setattr("builtins.input", lambda _prompt: next(answers))
 
     console.run_console()
@@ -134,6 +136,93 @@ def test_startup_lists_links_and_persists_user_additions(tmp_path, monkeypatch, 
     assert "Git depo bağlantıları:" in output
     assert "Bağlantı eklenemedi" in output
     assert "Bağlantı kaydedildi" in output
+
+
+def test_repository_config_contains_only_new_finding_fixtures():
+    links = load_repository_links(
+        Path(__file__).resolve().parents[1] / "repo_link.json"
+    )
+
+    assert links == (
+        "https://github.com/mehmetdenizersoy-code/mevzuatagent-demo1-findings.git",
+        "https://github.com/mehmetdenizersoy-code/mevzuatagent-demo2-findings.git",
+    )
+
+
+def test_local_repository_candidates_only_show_configured_clones(tmp_path, monkeypatch):
+    monkeypatch.setattr(console, "_ROOT", tmp_path)
+    configured = (
+        "https://github.com/example/demo1-findings.git",
+        "https://github.com/example/demo2-findings.git",
+    )
+    save_repository_links(configured, tmp_path / "repo_link.json")
+    repositories = tmp_path / "data/repositories"
+    tests = tmp_path / "data/test_repositories"
+    for name in ("demo1-findings", "demo2-findings", "old-demo"):
+        (repositories / name / ".git").mkdir(parents=True)
+    (tests / "demo1" / ".git").mkdir(parents=True)
+
+    assert console._local_repository_candidates() == [
+        repositories / "demo1-findings",
+        repositories / "demo2-findings",
+    ]
+
+
+def test_clean_previous_scan_data_clears_generated_state_but_preserves_other_data(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(console, "_ROOT", tmp_path)
+    generated_paths = (
+        "data/legislation/downloads",
+        "data/legislation/raw",
+        "data/legislation/rag",
+        "data/reports/scans",
+        "data/reports/remediation",
+    )
+    for relative_path in generated_paths:
+        target = tmp_path / relative_path
+        target.mkdir(parents=True)
+        (target / "generated.txt").write_text("generated", encoding="utf-8")
+
+    repository = tmp_path / "data/repositories/example"
+    repository.mkdir(parents=True)
+    _run_git(repository, "init", "-b", "main")
+    preserved_report = tmp_path / "data/reports/live_model_verification/live.json"
+    preserved_report.parent.mkdir(parents=True)
+    preserved_report.write_text("keep", encoding="utf-8")
+    preserved_data = tmp_path / "data/e2e/rag/chunks.jsonl"
+    preserved_data.parent.mkdir(parents=True)
+    preserved_data.write_text("keep", encoding="utf-8")
+
+    console._clean_previous_scan_data()
+
+    assert all(not (tmp_path / path).exists() for path in generated_paths)
+    assert not repository.exists()
+    assert preserved_report.read_text(encoding="utf-8") == "keep"
+    assert preserved_data.read_text(encoding="utf-8") == "keep"
+    assert console._next_pipeline_step() == (
+        "1",
+        "Mevzuat belgelerini indirip RAG indeksini hazırlama",
+    )
+
+
+def test_clean_previous_scan_data_preserves_everything_if_clone_is_dirty(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(console, "_ROOT", tmp_path)
+    scans = tmp_path / "data/reports/scans"
+    scans.mkdir(parents=True)
+    (scans / "old.json").write_text("old", encoding="utf-8")
+    repository = tmp_path / "data/repositories/example"
+    repository.mkdir(parents=True)
+    _run_git(repository, "init", "-b", "main")
+    (repository / "uncommitted.txt").write_text("keep me", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="değişiklik veya yok sayılan dosyalar"):
+        console._clean_previous_scan_data()
+
+    assert (scans / "old.json").is_file()
+    assert (repository / "uncommitted.txt").read_text(encoding="utf-8") == "keep me"
 
 
 def test_chat_response_uses_project_prompt_and_local_ollama(
@@ -477,7 +566,7 @@ def test_ollama_scan_agent_uses_legal_search_and_bounded_file_tools(tmp_path):
                         {
                             "function": {
                                 "name": "mevzuat_ara",
-                                "arguments": {"query": "üye işyeri kart hamili"},
+                                "arguments": {"query": ""},
                             }
                         }
                     ],
@@ -490,13 +579,21 @@ def test_ollama_scan_agent_uses_legal_search_and_bounded_file_tools(tmp_path):
                     "tool_calls": [
                         {
                             "function": {
+                                "name": "mevzuat_ara",
+                                "arguments": {
+                                    "query": "üye işyeri kart hamili",
+                                },
+                            },
+                        },
+                        {
+                            "function": {
                                 "name": "dosya_oku",
                                 "arguments": {
                                     "file_path": "payments.py",
                                     "start_line": 1,
                                     "end_line": 2,
                                 },
-                            }
+                            },
                         }
                     ],
                 }
@@ -530,6 +627,8 @@ def test_ollama_scan_agent_uses_legal_search_and_bounded_file_tools(tmp_path):
         "mevzuat_ara",
         "dosya_oku",
     ]
+    tool_error = json.loads(requests_seen[1]["messages"][-1]["content"])
+    assert "non-empty query" in tool_error["error"]
     assert context == [{"source": "law.pdf", "page": 7, "text": legal_quote}]
     assert "2:     publish(cardholder)" in requests_seen[2]["messages"][-1]["content"]
 
@@ -755,6 +854,104 @@ def test_model_pool_estimate_recommends_fastest_installed_model(tmp_path):
     ]
     assert result.models[0].estimated_seconds < result.models[1].estimated_seconds
     assert benchmark.call_count == 3
+
+
+def test_scan_model_selection_requires_explicit_valid_number(monkeypatch, capsys):
+    models = (
+        ModelEstimate("fast-model", 100.0, 120, 2),
+        ModelEstimate("slower-model", 20.0, 120, 6),
+    )
+    answers = iter(("", "0", "2"))
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(answers))
+
+    assert console._select_scan_model(models) == "slower-model"
+    output = capsys.readouterr().out
+    assert "Listeden bir model numarası seçin" in output
+    assert "Model numarası listede yok" in output
+
+
+def test_scan_model_selection_can_cancel(monkeypatch):
+    monkeypatch.setattr("builtins.input", lambda _prompt: "q")
+
+    assert console._select_scan_model(
+        (ModelEstimate("fast-model", 100.0, 120, 2),)
+    ) is None
+
+
+def test_scan_automatically_prepares_missing_rag_before_cost_estimation(
+    tmp_path, monkeypatch
+):
+    repository = tmp_path / "data/repositories/demo"
+    repository.mkdir(parents=True)
+    index_path = tmp_path / "data/legislation/rag/chunks.jsonl"
+    events = []
+    monkeypatch.setattr(console, "_ROOT", tmp_path)
+    monkeypatch.setattr(console, "_select_repository", lambda: repository)
+    monkeypatch.setattr(console, "_count_tracked_sources", lambda _repo: 1)
+    monkeypatch.setattr(console, "_read_positive_integer", lambda *args, **kwargs: 1)
+    monkeypatch.setattr(console, "_active_rag_index", lambda: index_path)
+
+    def prepare():
+        events.append("prepare")
+        index_path.parent.mkdir(parents=True)
+        index_path.write_text("{}\n", encoding="utf-8")
+
+    def run_scan_workflow(paths, **kwargs):
+        events.append("estimate-and-scan")
+        assert paths == [repository]
+        assert kwargs["rag_index_path"] == index_path
+        return SimpleNamespace(status="scan_declined", repositories=())
+
+    monkeypatch.setattr(console, "_prepare_legislation", prepare)
+    monkeypatch.setattr(console, "run_scan_workflow", run_scan_workflow)
+
+    console._scan_repository()
+
+    assert events == ["prepare", "estimate-and-scan"]
+
+
+def test_scan_approval_shows_every_estimate_and_requires_model_and_consent(
+    monkeypatch, capsys
+):
+    models = (
+        ModelEstimate("fast-model", 100.0, 120, 2),
+        ModelEstimate("slower-model", 20.0, 120, 6),
+    )
+    estimate = ModelPoolEstimate(
+        scan=ScanCostEstimate(
+            model="estimate",
+            tokens_per_second_assumption=1,
+            repositories=(),
+            errors=(),
+        ),
+        models=models,
+        recommended_model="fast-model",
+        errors=("unavailable-model: benchmark failed",),
+    )
+    request = ScanApprovalRequest(
+        estimate=estimate,
+        max_files=4,
+        recommended_model="fast-model",
+        system_prompt="scan prompt",
+    )
+    monkeypatch.setattr("builtins.input", lambda _prompt: "2")
+    confirmation = []
+    monkeypatch.setattr(
+        console,
+        "_ask_yes",
+        lambda prompt: confirmation.append(prompt) or True,
+    )
+
+    assert console._request_scan_approval(request) == "slower-model"
+
+    output = capsys.readouterr().out
+    assert "fast-model" in output and "yaklaşık 2 saniye" in output
+    assert "slower-model" in output and "yaklaşık 6 saniye" in output
+    assert "unavailable-model: benchmark failed" in output
+    assert confirmation == [
+        "slower-model ile yaklaşık 6 saniyelik bu taramayı başlatmayı "
+        "onaylıyor musunuz?"
+    ]
 
 
 def test_benchmark_ollama_model_uses_server_token_metrics():
@@ -1302,6 +1499,123 @@ def test_propose_remediation_returns_only_verified_top_finding_files(tmp_path):
     assert "return True" in changes["rules.py"]
 
 
+def test_propose_remediation_retries_empty_response_with_explicit_json_retry(
+    tmp_path,
+):
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    (repository / "rules.py").write_text(
+        "def check():\n    return False\n",
+        encoding="utf-8",
+    )
+    scan_path = tmp_path / "scan.json"
+    scan_path.write_text(
+        json.dumps(
+            {
+                "findings": [
+                    {
+                        "severity": "HIGH",
+                        "confidence": 10,
+                        "file": "rules.py",
+                        "line": 2,
+                        "evidence": "    return False",
+                        "title": "Synthetic test finding",
+                        "recommendation": "Return True for this test.",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    requests = []
+
+    def respond(request, timeout):
+        body = json.loads(request.data)
+        requests.append(body)
+        content = (
+            ""
+            if len(requests) == 1
+            else json.dumps(
+                {
+                    "changes": [
+                        {
+                            "path": "rules.py",
+                            "content": "def check():\n    return True\n",
+                        }
+                    ]
+                }
+            )
+        )
+        return BytesIO(json.dumps({"message": {"content": content}}).encode())
+
+    with patch("mevzuat_agent.tools.propose_remediation.urlopen", side_effect=respond):
+        changes = propose_remediation(repository, scan_path, model="test-model")
+
+    assert len(requests) == 2
+    assert all(request["think"] is False for request in requests)
+    assert "previous response was empty or invalid" in requests[1]["messages"][-1][
+        "content"
+    ]
+    assert "return True" in changes["rules.py"]
+
+
+def test_propose_remediation_retries_python_syntax_error(tmp_path):
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    (repository / "rules.py").write_text(
+        "def check():\n    return False\n",
+        encoding="utf-8",
+    )
+    scan_path = tmp_path / "scan.json"
+    scan_path.write_text(
+        json.dumps(
+            {
+                "findings": [
+                    {
+                        "severity": "HIGH",
+                        "confidence": 10,
+                        "file": "rules.py",
+                        "line": 2,
+                        "evidence": "    return False",
+                        "title": "Synthetic test finding",
+                        "recommendation": "Return True for this test.",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    requests = []
+
+    def respond(request, timeout):
+        requests.append(request)
+        content = (
+            "def check(:\n    return True\n"
+            if len(requests) == 1
+            else "def check():\n    return True\n"
+        )
+        return BytesIO(
+            json.dumps(
+                {
+                    "message": {
+                        "content": json.dumps(
+                            {"changes": [{"path": "rules.py", "content": content}]}
+                        )
+                    }
+                }
+            ).encode()
+        )
+
+    with patch("mevzuat_agent.tools.propose_remediation.urlopen", side_effect=respond):
+        changes = propose_remediation(repository, scan_path, model="test-model")
+
+    assert len(requests) == 2
+    assert "parse for its file type" in json.loads(requests[1].data)["messages"][-1][
+        "content"
+    ]
+    assert "return True" in changes["rules.py"]
+
+
 def test_create_github_pr_requires_approval_and_passing_tests(tmp_path):
     from mevzuat_agent.tools.validate_remediation import RemediationTestResult
 
@@ -1700,7 +2014,9 @@ def test_langchain_scan_workflow_does_not_scan_when_user_declines(tmp_path):
     assert result.repositories == ()
 
 
-def test_scan_result_offers_remediation_with_repository_and_scan_path(tmp_path, monkeypatch):
+def test_scan_result_offers_remediation_with_repository_and_scan_path(
+    tmp_path, monkeypatch, capsys
+):
     repository = tmp_path / "demo"
     scan_path = tmp_path / "scan.json"
     scan = RepositoryScanResult(
@@ -1736,7 +2052,17 @@ def test_scan_result_offers_remediation_with_repository_and_scan_path(tmp_path, 
         remediation_plan=None,
     )
     observed = {}
-    monkeypatch.setattr(console, "_ask_yes", lambda question: True)
+
+    def approve_after_report(question):
+        output = capsys.readouterr().out
+        assert "Tarama raporu özeti" in output
+        assert "Synthetic issue" in output
+        assert str(artifact.markdown_report) in output
+        assert str(artifact.html_report) in output
+        assert "incelediniz mi" in question
+        return True
+
+    monkeypatch.setattr(console, "_ask_yes", approve_after_report)
     monkeypatch.setattr(
         console,
         "_remediate",
@@ -1801,6 +2127,7 @@ def test_failed_demo_scan_offers_deterministic_synthetic_report(
     (fixture / "payment_rules.py").write_text("def example():\n    return None\n", encoding="utf-8")
     (fixture / "scan_result.json").write_text("{}", encoding="utf-8")
     monkeypatch.setattr(console, "_ROOT", tmp_path)
+    monkeypatch.setattr(console, "_ask_yes", lambda _question: False)
     questions = []
     monkeypatch.setattr(console, "_ask_yes", lambda question: questions.append(question) or True)
     generated = []
@@ -1843,6 +2170,7 @@ def test_failed_demo_scan_offers_deterministic_synthetic_report(
 
 
 def test_remediation_stops_when_scan_has_no_findings(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(console, "_ROOT", tmp_path)
     scan_path = tmp_path / "scan.json"
     scan_path.write_text(
         json.dumps({"findings": [], "file_results": []}),
@@ -1858,18 +2186,121 @@ def test_remediation_stops_when_scan_has_no_findings(tmp_path, monkeypatch, caps
     assert "doğrulanmış bulgu olmadığından" in capsys.readouterr().out
 
 
+def test_remediation_failure_writes_status_reports_and_prints_scan_report_paths(
+    tmp_path, monkeypatch, capsys
+):
+    monkeypatch.setattr(console, "_ROOT", tmp_path)
+    reports_dir = tmp_path / "user-reports"
+    monkeypatch.setenv("MEVZUAT_AGENT_REPORTS_DIR", str(reports_dir))
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    scan_path = tmp_path / "data/reports/scans/scan.json"
+    scan_path.parent.mkdir(parents=True)
+    scan_path.write_text(
+        json.dumps(
+            {
+                "repository": str(repository),
+                "branch_commit": "main@abc123",
+                "model": "qwen3:4b",
+                "scan_scope": "first source file",
+                "scanned_at": "2026-10-30T00:00:00+00:00",
+                "files_scanned": 1,
+                "files_considered": 1,
+                "findings": [
+                    {
+                        "severity": "HIGH",
+                        "confidence": 9,
+                        "file": "rules.py",
+                        "line": 1,
+                        "evidence": "def check():",
+                        "title": "Check needs review",
+                        "recommendation": "Review the check.",
+                    }
+                ],
+                "file_results": [],
+                "limitations": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with (
+        patch(
+            "mevzuat_agent.console.propose_remediation",
+            side_effect=RuntimeError("Ollama boş düzeltme yanıtı döndürdü"),
+        ),
+        patch("mevzuat_agent.console.list_ollama_models", return_value=()),
+    ):
+        console._remediate(repository, scan_path)
+
+    scan_markdown = scan_path.with_suffix(".md")
+    scan_html = scan_path.with_suffix(".html")
+    remediation_markdown = tuple(reports_dir.glob("*.md"))
+    remediation_html = tuple(reports_dir.glob("*.html"))
+    assert scan_markdown.is_file() and scan_html.is_file()
+    assert len(remediation_markdown) == len(remediation_html) == 1
+    assert "Ollama boş düzeltme yanıtı döndürdü" in remediation_markdown[0].read_text(
+        encoding="utf-8"
+    )
+    assert "<strong>Kod değişikliği:</strong> Uygulanmadı" in remediation_html[0].read_text(
+        encoding="utf-8"
+    )
+    output = capsys.readouterr().out
+    assert scan_markdown.resolve().as_uri() in output
+    assert scan_html.resolve().as_uri() in output
+    assert remediation_markdown[0].resolve().as_uri() in output
+    assert remediation_html[0].resolve().as_uri() in output
+
+
+def test_remediation_falls_back_to_another_installed_model(tmp_path, monkeypatch):
+    calls = []
+
+    def propose(repository, scan_path, *, model):
+        calls.append(model)
+        if model == "qwen3:4b":
+            raise RuntimeError("empty response")
+        return {"rules.py": "fixed"}
+
+    monkeypatch.setattr(console, "propose_remediation", propose)
+    monkeypatch.setattr(
+        console,
+        "list_ollama_models",
+        lambda _url: ("qwen3:4b", "gemma3:4b"),
+    )
+
+    changes, model = console._propose_remediation_with_fallback(
+        tmp_path / "repo",
+        tmp_path / "scan.json",
+        "qwen3:4b",
+    )
+
+    assert model == "gemma3:4b"
+    assert calls == ["qwen3:4b", "gemma3:4b"]
+    assert changes == {"rules.py": "fixed"}
+
+
 def test_pipeline_recommends_next_unfinished_step(tmp_path, monkeypatch):
     monkeypatch.setattr(console, "_ROOT", tmp_path)
+    monkeypatch.setattr(console, "_FRESH_START", False)
     assert console._next_pipeline_step()[0] == "1"
 
     rag_index = tmp_path / "data/legislation/rag/chunks.jsonl"
     rag_index.parent.mkdir(parents=True)
     rag_index.write_text("{}\n", encoding="utf-8")
     assert console._next_pipeline_step()[0] == "2"
+    monkeypatch.setattr(console, "_FRESH_START", True)
+    assert console._next_pipeline_step() == (
+        "2",
+        "repo_link.json depolarını temiz çalışma alanına klonlama",
+    )
+    monkeypatch.setattr(console, "_FRESH_START", False)
 
     repository = tmp_path / "data/repositories/demo"
     repository.mkdir(parents=True)
     _run_git(repository, "init", "-b", "main")
+    save_repository_links(
+        ["https://github.com/example/demo.git"],
+        tmp_path / "repo_link.json",
+    )
     assert console._next_pipeline_step()[0] == "3"
 
     scan_dir = tmp_path / "data/reports/scans"
@@ -1898,6 +2329,10 @@ def test_pipeline_recovers_from_invalid_latest_scan(tmp_path, monkeypatch, capsy
     repository = tmp_path / "data/repositories/demo"
     repository.mkdir(parents=True)
     _run_git(repository, "init", "-b", "main")
+    save_repository_links(
+        ["https://github.com/example/demo.git"],
+        tmp_path / "repo_link.json",
+    )
     scan_path = tmp_path / "data/reports/scans/demo.json"
     scan_path.parent.mkdir(parents=True)
     scan_path.write_text("{invalid", encoding="utf-8")
@@ -1910,6 +2345,7 @@ def test_synthetic_fixture_scan_generates_findings_and_reports(
     tmp_path, monkeypatch, capsys
 ):
     monkeypatch.setattr(console, "_ROOT", tmp_path)
+    monkeypatch.setattr(console, "_ask_yes", lambda _question: False)
     repository = tmp_path / "data/test_repositories/demo1"
     repository.mkdir(parents=True)
     _run_git(repository, "init", "-b", "main")
@@ -1952,6 +2388,12 @@ def test_synthetic_fixture_scan_generates_findings_and_reports(
     assert result["findings"][0]["mevzuat_source"] == "TEST_FIXTURE_NOT_LAW"
     assert output_path.with_suffix(".md").is_file()
     assert output_path.with_suffix(".html").is_file()
+    assert "Kaynak dosyası kapsamı" in output_path.with_suffix(".md").read_text(
+        encoding="utf-8"
+    )
+    assert "Kaynak dosyası kapsamı" in output_path.with_suffix(".html").read_text(
+        encoding="utf-8"
+    )
     assert output_path.with_name("demo1_synthetic_remediation_plan.md").is_file()
     assert console._latest_scan_target() is None
     assert "Sentetik test bulguları üretildi" in capsys.readouterr().out

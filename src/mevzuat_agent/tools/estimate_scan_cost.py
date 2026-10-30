@@ -123,7 +123,7 @@ def estimate_scan_cost_for_model_pool(
         benchmark_output_tokens: int = 24,
         benchmark_timeout_seconds: float = 300,
 ) -> ModelPoolEstimate:
-    """Kurulu Ollama modellerini hızlarına göre karşılaştırıp en hızlıyı önerir."""
+    """Kurulu Ollama modellerini ve süre tahminlerini döndürür."""
     if benchmark_output_tokens <= 0:
         raise ValueError("benchmark_output_tokens must be greater than zero")
     if benchmark_timeout_seconds <= 0:

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="658" viewBox="0 0 1480 658" role="img" aria-labelledby="title">
+  <title id="title">Temiz başlangıç, RAG hazırlama ve depo klonlama</title>
+  <rect width="1480" height="658" rx="14" fill="#10151d"/>
+  <rect width="1480" height="48" rx="14" fill="#252c36"/>
+  <rect y="34" width="1480" height="14" fill="#252c36"/>
+  <circle cx="26" cy="24" r="7" fill="#ff5f57"/>
+  <circle cx="50" cy="24" r="7" fill="#febc2e"/>
+  <circle cx="74" cy="24" r="7" fill="#28c840"/>
+  <text x="740" y="30" text-anchor="middle" fill="#d6dbe2" font-family="Arial, sans-serif" font-size="15">Terminal — MevzuatAgent</text>
+  <text x="30" y="72" fill="#8391a3" font-family="Arial, sans-serif" font-size="13">Temiz başlangıç, RAG hazırlama ve depo klonlama · gerçek çalıştırma çıktısı</text>
+  <g font-family="Menlo, Monaco, Consolas, monospace" font-size="15">
+    <text x="30" y="112" fill="#7dd3fc" xml:space="preserve">(.venv) (base) denizersoy@192 Final-Proje_MevzuatAgent % .venv/bin/mevzuat-agent</text>
+    <text x="30" y="134" fill="#e2e8f0" xml:space="preserve">Merhaba! Ben MevzuatAgent. Seçtiğiniz mevzuat ve Git depolarını inceleyip kanıta dayalı tarama raporları oluşturmaya </text>
+    <text x="30" y="156" fill="#e2e8f0" xml:space="preserve">   yardımcı olurum.</text>
+    <text x="30" y="178" fill="#e2e8f0" xml:space="preserve">MevzuatAgent | Mevzuat uyumluluğu kod tarama aracı</text>
+    <text x="30" y="200" fill="#e2e8f0" xml:space="preserve">Raporlar otomatik karar değildir; mevzuat uzmanı tarafından doğrulanmalıdır.</text>
+    <text x="30" y="222" fill="#e2e8f0" xml:space="preserve"></text>
+    <text x="30" y="244" fill="#e2e8f0" xml:space="preserve">Mevzuat seçenekleri:</text>
+    <text x="30" y="266" fill="#e2e8f0" xml:space="preserve">  1. 1.5.5464.pdf</text>
+    <text x="30" y="288" fill="#e2e8f0" xml:space="preserve"></text>
+    <text x="30" y="310" fill="#7dd3fc" xml:space="preserve">Siz: 1</text>
+    <text x="30" y="332" fill="#e2e8f0" xml:space="preserve">Mevzuat kapsamı seçildi: tüm kaynaklar. Ne yapmak istersiniz?</text>
+    <text x="30" y="354" fill="#e2e8f0" xml:space="preserve"></text>
+    <text x="30" y="376" fill="#7dd3fc" xml:space="preserve">Siz: tarama yap</text>
+    <text x="30" y="398" fill="#e2e8f0" xml:space="preserve">Yapılandırılmış GitHub depolarının klonu bulunamadı. Önce depoları klonlayın.</text>
+    <text x="30" y="420" fill="#e2e8f0" xml:space="preserve"></text>
+    <text x="30" y="442" fill="#7dd3fc" xml:space="preserve">Siz: devam</text>
+    <text x="30" y="464" fill="#e2e8f0" xml:space="preserve">Pipeline adımı: Mevzuat belgelerini indirip RAG indeksini hazırlama</text>
+    <text x="30" y="486" fill="#a7f3d0" xml:space="preserve">RAG indeksi hazır: /Users/denizersoy/PycharmProjects/Final-Proje_MevzuatAgent/data/legislation/rag/chunks.jsonl (55 </text>
+    <text x="30" y="508" fill="#e2e8f0" xml:space="preserve">   parça)</text>
+    <text x="30" y="530" fill="#e2e8f0" xml:space="preserve"></text>
+    <text x="30" y="552" fill="#7dd3fc" xml:space="preserve">Siz: devam</text>
+    <text x="30" y="574" fill="#e2e8f0" xml:space="preserve">Pipeline adımı: repo_link.json depolarını temiz çalışma alanına klonlama</text>
+    <text x="30" y="596" fill="#a7f3d0" xml:space="preserve">Klonlandı: /Users/denizersoy/PycharmProjects/Final-Proje_MevzuatAgent/data/repositories/mevzuatagent-demo1-findings</text>
+    <text x="30" y="618" fill="#a7f3d0" xml:space="preserve">Klonlandı: /Users/denizersoy/PycharmProjects/Final-Proje_MevzuatAgent/data/repositories/mevzuatagent-demo2-findings</text>
+  </g>
+</svg>

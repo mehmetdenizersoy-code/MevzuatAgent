@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="658" viewBox="0 0 1480 658" role="img" aria-labelledby="title">
+  <title id="title">Ollama model tahmini: llama3.2:1b hatası ve qwen3:4b taraması</title>
+  <rect width="1480" height="658" rx="14" fill="#10151d"/>
+  <rect width="1480" height="48" rx="14" fill="#252c36"/>
+  <rect y="34" width="1480" height="14" fill="#252c36"/>
+  <circle cx="26" cy="24" r="7" fill="#ff5f57"/>
+  <circle cx="50" cy="24" r="7" fill="#febc2e"/>
+  <circle cx="74" cy="24" r="7" fill="#28c840"/>
+  <text x="740" y="30" text-anchor="middle" fill="#d6dbe2" font-family="Arial, sans-serif" font-size="15">Terminal — MevzuatAgent</text>
+  <text x="30" y="72" fill="#8391a3" font-family="Arial, sans-serif" font-size="13">Ollama model tahmini: llama3.2:1b hatası ve qwen3:4b taraması · gerçek çalıştırma çıktısı</text>
+  <g font-family="Menlo, Monaco, Consolas, monospace" font-size="15">
+    <text x="30" y="112" fill="#7dd3fc" xml:space="preserve">Siz: devam</text>
+    <text x="30" y="134" fill="#e2e8f0" xml:space="preserve">Pipeline adımı: Yerel depoda tarama tahmini ve onaylı tarama</text>
+    <text x="30" y="156" fill="#e2e8f0" xml:space="preserve">Depo numarası: 1</text>
+    <text x="30" y="178" fill="#e2e8f0" xml:space="preserve">Taranacak kaynak dosyası sayısı (1-1) [tümü: 1]: 1</text>
+    <text x="30" y="200" fill="#e2e8f0" xml:space="preserve"></text>
+    <text x="30" y="222" fill="#e2e8f0" xml:space="preserve">Kurulu Ollama modelleri için ölçülen tarama süresi tahminleri:</text>
+    <text x="30" y="244" fill="#e2e8f0" xml:space="preserve">  1. llama3.2:1b: 64.96 token/sn, yaklaşık 35 saniye (en hızlı)</text>
+    <text x="30" y="266" fill="#e2e8f0" xml:space="preserve">  2. gemma3:4b: 30.73 token/sn, yaklaşık 73 saniye</text>
+    <text x="30" y="288" fill="#e2e8f0" xml:space="preserve">  3. qwen3:4b: 30.61 token/sn, yaklaşık 73 saniye</text>
+    <text x="30" y="310" fill="#e2e8f0" xml:space="preserve">Taramada kullanılacak model numarası [1-3] (iptal için q): 1</text>
+    <text x="30" y="332" fill="#e2e8f0" xml:space="preserve">llama3.2:1b ile yaklaşık 35 saniyelik bu taramayı başlatmayı onaylıyor musunuz? [e/H]: e</text>
+    <text x="30" y="354" fill="#a7f3d0" xml:space="preserve">Tarama durumu: completed</text>
+    <text x="30" y="376" fill="#e2e8f0" xml:space="preserve">Kaynak dosyası kapsamı: 1/1; başarıyla taranan: 0</text>
+    <text x="30" y="398" fill="#e2e8f0" xml:space="preserve">Doğrulanmış bulgu: 0</text>
+    <text x="30" y="420" fill="#fca5a5" xml:space="preserve">  - payment_rules.py: Local model scan failed (ValueError): Ollama agent exceeded the maximum tool-call rounds</text>
+    <text x="30" y="442" fill="#e2e8f0" xml:space="preserve"></text>
+    <text x="30" y="464" fill="#7dd3fc" xml:space="preserve">Siz: devam</text>
+    <text x="30" y="486" fill="#e2e8f0" xml:space="preserve">Kurulu Ollama modelleri için ölçülen tarama süresi tahminleri:</text>
+    <text x="30" y="508" fill="#e2e8f0" xml:space="preserve">  1. gemma3:4b: 17.61 token/sn, yaklaşık 127 saniye (en hızlı)</text>
+    <text x="30" y="530" fill="#e2e8f0" xml:space="preserve">  2. llama3.2:1b: 11.70 token/sn, yaklaşık 191 saniye</text>
+    <text x="30" y="552" fill="#e2e8f0" xml:space="preserve">  3. qwen3:4b: 3.83 token/sn, yaklaşık 584 saniye</text>
+    <text x="30" y="574" fill="#e2e8f0" xml:space="preserve">Taramada kullanılacak model numarası [1-3] (iptal için q): 3</text>
+    <text x="30" y="596" fill="#e2e8f0" xml:space="preserve">qwen3:4b ile yaklaşık 584 saniyelik bu taramayı başlatmayı onaylıyor musunuz? [e/H]: e</text>
+    <text x="30" y="618" fill="#a7f3d0" xml:space="preserve">Tarama durumu: completed</text>
+  </g>
+</svg>

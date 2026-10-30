@@ -50,7 +50,7 @@ adımlarını başlatır. Masaüstü/web arayüzü veya kalıcı sohbet ajanı d
 | PDF metnini orta boyutlu, örtüşen parçalara ayırma | Uygulandı |
 | Yerel mevzuat araması | BM25 anahtar kelime ve isteğe bağlı sentence-transformers embedding aramasını RRF ile birleştirir |
 | Kullanıcı onayından sonra depo klonlama | Araçta uygulandı |
-| Kurulu Ollama modellerinin hızını ölçme ve süre tahmini | Uygulandı |
+| Yerel Ollama modeliyle tarama ve ölçülen hıza göre süre tahmini | Uygulandı |
 | Tahmin, tarama onayı, sınırlı tarama ve raporlamayı LangChain ile bağlama | Uygulandı; Python API |
 | Markdown ve HTML tarama raporu | Uygulandı |
 | En önemli iki bulgu için düzeltme planı | Uygulandı |
@@ -59,6 +59,7 @@ adımlarını başlatır. Masaüstü/web arayüzü veya kalıcı sohbet ajanı d
 | En önemli iki bulgu için yerel Ollama düzeltme önerisi | Uygulandı; öneri kullanıcıya gösterilir |
 | Onaylı remediation değişikliğini ayrı worktree'de uygulama | Uygulandı |
 | Markdown ve HTML diff raporu oluşturma | Uygulandı; `MEVZUAT_AGENT_REPORTS_DIR` ile özelleştirilebilen kullanıcı rapor dizinine kaydedilir |
+| Başlangıçta eski taramaları temizleyip kaynakları yeniden hazırlama | Uygulandı; kullanıcı onayıyla |
 | Düzeltmenin hukuki doğruluğunu otomatik kanıtlama | Uygulanmadı; uzman incelemesi gerekir |
 
 Menü, kod değişikliği için açık kullanıcı onayı ister. Onaydan sonra diff
@@ -69,27 +70,31 @@ raporları üretilir ve etkileşimli remediation akışı burada tamamlanır.
 1. Uygulama kendini tanıtır; kayıtlı mevzuat ve Git depo bağlantılarını listeler.
    Kullanıcı isterse yeni HTTP(S) mevzuat bağlantısı veya HTTPS/SSH depo
    bağlantısı ekleyebilir; bağlantılar ilgili JSON dosyasına kaydedilir.
-2. `mevzuat_link.json` ve `repo_link.json` bağlantı dosyaları doğrulanır.
-3. Mevzuat PDF'leri indirilir. Her sayfanın metni yaklaşık 1.200 karakterlik,
+2. Kullanıcı isterse eski indirmeleri, RAG/chunk indeksini, tarama raporlarını,
+   varsayılan remediation raporlarını ve yerel depo klonlarını temizleyerek yeni
+   tarama başlatır. Kullanıcının özel rapor dizini bu temizlik dışında kalır.
+   Değiştirilmiş, yok sayılan dosya içeren veya bağlı worktree'si bulunan
+   klonlar silinmez; temizlik durdurulur.
+3. `mevzuat_link.json` ve `repo_link.json` bağlantı dosyaları doğrulanır.
+4. Mevzuat PDF'leri indirilir. Her sayfanın metni yaklaşık 1.200 karakterlik,
    200 karakter örtüşmeli parçalara ayrılır; kaynak dosya, sayfa ve parça
    konumu korunur.
-4. RAG verisi yerel `chunks.jsonl` dosyasına yazılır; BM25 ve isteğe bağlı
+5. RAG verisi yerel `chunks.jsonl` dosyasına yazılır; BM25 ve isteğe bağlı
    çok dilli sentence-transformers embedding araması reciprocal-rank fusion
    (RRF) ile birleştirilir. Tarama sırasında model ayrıca en fazla dört araç
    turunda `mevzuat_ara` ve yalnızca taranan dosyayı okuyabilen `dosya_oku`
    araçlarını seçer; araçlar kod çalıştıramaz veya dosya değiştiremez.
-5. Depolar ancak açık kullanıcı onayından sonra yerel çalışma alanına klonlanır.
-6. Seçilen depo ve dosya kapsamı için kurulu Ollama modelleri ölçülür; model
-   başına tahmini token miktarı ve süre listelenir. En hızlı model önerilir.
-   Yerel kullanım için fiyat bilgisi verilmediğinden parasal maliyet üretilmez.
-7. Kullanıcı tahmin edilen modeller arasından birini seçip onaylamadan tarama
-   başlamaz. İş akışı tarama öncesi branch ve commit değerlerinin tahminle
-   aynı olduğunu kontrol eder.
-8. Kod, ilgili mevzuat parçalarıyla birlikte Ollama'ya gönderilir. Kaynak satır
+6. Kullanıcı onayından sonra depolar yerel çalışma alanına klonlanır; temiz
+   başlangıç onayı bu klonlama iznini de kapsar.
+7. Kurulu Ollama modellerinin hızı ölçülür ve yaklaşık süre tahmini verilir.
+8. Kullanıcı model seçip tarama başlangıcını onaylamadan tarama başlamaz. İş
+   akışı tarama öncesi branch ve commit değerlerinin tahminle aynı olduğunu
+   kontrol eder.
+9. Kod ve ilgili mevzuat parçaları yerel Ollama modeline gönderilir. Kaynak satır
    kanıtı ve mevzuat sayfa/kaynak atfı doğrulanmayan bulgular elenir.
-9. Tarama JSON'u, Markdown ve HTML raporları üretilir. Bulgu varsa en yüksek
+10. Tarama JSON'u, Markdown ve HTML raporları üretilir. Bulgu varsa en yüksek
    öncelikli iki bulgu için öneri planı oluşturulur.
-10. Kullanıcı onaylı düzeltme ayrı worktree'de uygulanır; Markdown ve HTML
+11. Kullanıcı onaylı düzeltme ayrı worktree'de uygulanır; Markdown ve HTML
    diff raporları kullanıcı rapor dizinine kaydedilir ve akış sona erer.
 
 ## Bileşenler
@@ -283,17 +288,38 @@ Başlangıçta uygulama `mevzuat_link.json` içindeki mevzuat bağlantılarını
 istenirse yeni bağlantı eklenebilir; girilen bağlantılar biçim kontrolünden
 geçtikten sonra ilgili JSON dosyasına kaydedilir.
 
+Ardından uygulama, eski tarama verilerini temizleyip temiz bir çalıştırma
+başlatmak isteyip istemediğinizi sorar. Onay verirseniz indirilmiş mevzuat
+dosyaları, RAG/chunk indeksi, tarama ve remediation raporları ile
+`data/repositories/` altındaki temiz klonlar silinir; iş akışında `devam`
+yazdığınızda indirme ve RAG hazırlığı, sonraki adımda depo klonlama yeniden
+yapılır. Değiştirilmiş veya yok sayılan dosyalar içeren, başka worktree'ye bağlı
+klon varsa temizlik hiçbir şeyi silmeden durur. `H` yanıtı yerel verileri
+korur ve mevcut akışa devam eder. `MEVZUAT_AGENT_REPORTS_DIR` ile belirtilmiş
+özel rapor dizinleri bu işlemle silinmez.
+
 Pipeline aşamasını doğrudan sohbet isteğiyle de başlatabilirsiniz: `RAG
 hazırla`, `depoları klonla`, `tarama yap`, `bulguları düzelt`. İndirme,
 klonlama, tarama ve dosya değiştirme adımları ayrıca kullanıcı onayı ister.
 
-Gerçek taramada tahmin ekranında taramayı onaylayın ve model listesinden uygun
-bir yerel modeli seçin. Model hatası veya sıfır doğrulanmış bulgu varsa
-remediation başlamaz. Önerilen diff'i inceleyip yalnızca onayladığınız
+Gerçek taramada kaynak kod dosyalarının tamamı varsayılan olarak kapsama alınır;
+isterseniz tarama öncesi daha düşük bir üst sınır seçebilirsiniz. Rapor, toplam
+kapsamdaki dosya sayısını ve başarıyla taranan dosya sayısını ayrı gösterir.
+Tüm kurulu Ollama modelleri için ölçülen hız ve tahmini süre gösterilir; listeden
+bir model seçmeden tarama başlamaz. Model hatası veya sıfır
+doğrulanmış bulgu varsa remediation başlamaz. Tarama sonrasında doğrulanmış
+bulgular ve Markdown/HTML rapor yolları sunulur; remediation ancak ayrı onayınızla
+başlar. Önerilen diff'i inceleyip yalnızca onayladığınız
 değişikliği uygulayın. Markdown ve HTML diff raporları, proje kökünde varsayılan
 olarak `data/reports/remediation/` olan kullanıcı rapor dizinine kaydedilir;
 akış raporlar oluşturulduktan sonra tamamlanır. Otomatik test, commit, push
 adımı yoktur.
+
+Boş veya geçersiz model yanıtı aynı modelle bir kez daha denenir; sonuç yine
+geçersizse kurulu başka bir Ollama modeli denenir. Python dosyalarında
+sözdizimi hatalı veya yalnızca yorum/biçim değişikliği içeren öneriler reddedilir.
+Bunlar gerçek remediation başarısı sayılmaz; hata durumunda da Markdown ve HTML
+durum raporları oluşturulur.
 
 Uygulama son tarama raporundaki depo kökünü ve tarama JSON yolunu otomatik
 bulur; bu yolları elle yazmanız gerekmez. Son taramadaki bulgular için geçerli
@@ -338,7 +364,7 @@ eşleme, uygulamanın gösterdiği kanıtları ve sınırlarını birlikte açı
 |---|---|
 | Problem tanımı ve gerçek dünya uygunluğu | Kartlı ödeme yazılımlarında maskeleme, tutar ve idempotency gibi gerçekçi kontroller için mevzuat destekli ön inceleme. Çıktı uzman kararı veya uygunluk sertifikası değildir. |
 | Agentic mimari ve eğitim yaklaşımları | Yerel Ollama'nın sınırlı araç döngüsünde `mevzuat_ara` ve `dosya_oku` araçlarını seçmesi, hibrit BM25/embedding mevzuat RAG'i ve çok adımlı LangChain `Runnable` akışı. Kalıcı hafıza, otonom planlayıcı ve çoklu agent yoktur. |
-| İşlevsellik ve çıktı kalitesi | Depo taraması, kod kanıtı doğrulama ve Markdown/HTML raporlama akışları ile 61 otomatik test. Gerçek model çıktıları uzman incelemesi olmadan hukukî sonuç sayılmaz. |
+| İşlevsellik ve çıktı kalitesi | Depo taraması, kod kanıtı doğrulama ve Markdown/HTML raporlama akışları ile 73 otomatik test. Gerçek model çıktıları uzman incelemesi olmadan hukukî sonuç sayılmaz. |
 | Kod kalitesi ve teknik uygulama | Modüler Python araçları, ayrı iş akışı ve testler; yerel Ollama kullanımı bulut LLM API anahtarı gerektirmez. |
 | Dokümantasyon ve teslim | README'de proje amacı, teknoloji, kurulum ve çalıştırma adımları açıklanır. Gerçek depo çalıştırmasından alınacak terminal ve HTML rapor ekran görüntüleri sonradan eklenecektir. |
 
@@ -539,17 +565,48 @@ kod kanıtı, mevzuat kaynağı ve sınırlamalar yer alır. Bulgu çıkmaması
 uyumluluğun kanıtlandığı anlamına gelmez. HTML raporu kullanıcı/kod kaynaklı
 değerleri HTML olarak kaçışlayarak yazar.
 
-Başlangıç akışının aşağıdaki temsili görünümü, paylaşılan terminal metninden
-hazırlanmıştır; gerçek ekran görüntüsü değildir. Canlı depo taraması ve HTML
-rapor görselleri daha sonra eklenecektir.
+Kullanıcının paylaştığı temiz başlangıç ve tarama öncesi model tahmini terminal
+çıktısının görsel düzenlemesi aşağıdadır. Bu görsel, gerçek ekran yakalaması
+değil, paylaşılan terminal metninden oluşturulmuştur; tarama sonucu henüz bu
+çıktıda yer almamaktadır.
 
-![MevzuatAgent başlangıç terminal akışının temsili görünümü](docs/images/startup-terminal-temsili.svg)
+![Paylaşılan terminal çıktısından oluşturulan tarama öncesi görünüm](docs/images/terminal-sure-tahmini-onay.svg)
 
-Remediation akışına geçişin aşağıdaki temsili görünümü, paylaşılan terminal
-metninden hazırlanmıştır. Çıktı değişiklik önerisinin hazırlanma aşamasında
-sona erdiği için öneri, kullanıcı onayı veya remediation sonucu gösterilmez.
+Kullanıcının seçtiği tarama adımının devamı için ayrıca sentetik fixture
+verileriyle bir simülasyon hazırlandı. Bu terminal görünümü ve raporlar gerçek
+Ollama çalıştırması ya da mevzuat taraması değildir; bulgular yalnızca test
+fixture örnekleridir.
 
-![MevzuatAgent remediation hazırlığının temsili terminal görünümü](docs/images/remediation-baslangic-temsili.svg)
+![Sentetik fixture sonuçlarının terminal simülasyonu](docs/images/terminal-simulasyon-sonucu.svg)
+
+HTML rapor önizlemeleri:
+
+![Sentetik Demo 1 HTML rapor önizlemesi](docs/images/html-sentetik-demo1-onizleme.svg)
+![Sentetik Demo 2 HTML rapor önizlemesi](docs/images/html-sentetik-demo2-onizleme.svg)
+
+### Gerçek Ollama çalıştırması (qwen3:4b)
+
+Aşağıdaki görüntüler gerçek bir yerel çalıştırmanın terminal çıktısından
+üretilmiştir (`scripts/create_session_terminal_images.py`). `llama3.2:1b` modeli
+araç çağrısı turlarını tamamlayamadığı için taramayı bitirememiş, `qwen3:4b`
+1 doğrulanmış bulgu üretmiştir. Düzeltme önerisi `gemma3:4b` ile alınmıştır ve
+mevzuata uygunluğu kanıtlamaz; uzman doğrulaması gerekir.
+
+![Hazırlık ve klonlama](docs/images/terminal-gercek-01-hazirlik.svg)
+![Model tahmini ve tarama](docs/images/terminal-gercek-02-tarama-modelleri.svg)
+![Tarama bulgusu](docs/images/terminal-gercek-03-tarama-bulgusu.svg)
+![Remediation](docs/images/terminal-gercek-04-remediation.svg)
+
+Raporlar: [Tarama HTML](docs/examples/gercek_qwen3_tarama_raporu.html) ·
+[Tarama Markdown](docs/examples/gercek_qwen3_tarama_raporu.md) ·
+[Remediation HTML](docs/examples/gercek_qwen3_remediation_raporu.html) ·
+[Remediation Markdown](docs/examples/gercek_qwen3_remediation_raporu.md) ·
+[Düzeltme planı](docs/examples/gercek_qwen3_remediation_plani.md).
+
+Rapor dosyaları: [Demo 1 HTML](docs/examples/sentetik_demo1_tarama.html) ·
+[Demo 1 Markdown](docs/examples/sentetik_demo1_tarama.md) ·
+[Demo 2 HTML](docs/examples/simule_fixture_demo2_tarama.html) ·
+[Demo 2 Markdown](docs/examples/simule_fixture_demo2_tarama.md).
 
 Ödeme alanındaki bir kod örneği tek başına mevzuat bulgusu sayılmaz; ilgili
 mevzuat metni ve kod kanıtı uzman tarafından doğrulanmalıdır.

@@ -52,6 +52,7 @@ def _validate_scan_result(result: object) -> None:
 
 def _render_markdown(result: dict) -> str:
     findings = result["findings"]
+    selected_file_count = len(result["file_results"])
     lines = [
         "# Mevzuat Uyumluluk Tarama Raporu",
         "",
@@ -60,8 +61,9 @@ def _render_markdown(result: dict) -> str:
         f"- **Model:** `{_md(result['model'])}`",
         f"- **Kapsam:** {_md(result['scan_scope'])}",
         f"- **Tarih:** {_md(str(result.get('scanned_at', 'Belirtilmedi')))}",
-        f"- **İncelenen dosya:** {result.get('files_scanned', 0)} / "
-        f"{result.get('files_considered', 0)}",
+        f"- **Kaynak dosyası kapsamı:** {selected_file_count} / "
+        f"{result.get('files_considered', 0)}; başarıyla taranan: "
+        f"{result.get('files_scanned', 0)}",
         f"- **Doğrulanmış bulgu:** {len(findings)}",
         "",
         "> Bu rapor otomatik araç tarafından oluşturulmuştur. Bulguları uygulamadan "
@@ -175,7 +177,10 @@ def _render_html(result: dict) -> str:
         _translate_message(str(item)) for item in result["limitations"]
     ] or ["Bilinen bir sınırlama bildirilmedi."]
     limitations_html = "".join(f"<li>{_html(item)}</li>" for item in limitations)
-    file_count = f"{result.get('files_scanned', 0)} / {result.get('files_considered', 0)}"
+    file_count = (
+        f"{len(result['file_results'])} / {result.get('files_considered', 0)} "
+        f"(başarıyla taranan: {result.get('files_scanned', 0)})"
+    )
 
     return f"""<!doctype html>
 <html lang="tr">
@@ -213,7 +218,7 @@ code {{ overflow-wrap: anywhere; }}
 <div><strong>Model:</strong> {_html(result['model'])}</div>
 <div><strong>Kapsam:</strong> {_html(result['scan_scope'])}</div>
 <div><strong>Tarih:</strong> {_html(result.get('scanned_at', 'Belirtilmedi'))}</div>
-<div><strong>İncelenen dosya:</strong> {_html(file_count)}</div>
+<div><strong>Kaynak dosyası kapsamı:</strong> {_html(file_count)}</div>
 <div><strong>Doğrulanmış bulgu:</strong> {len(result['findings'])}</div>
 </div>
 <p>Bu otomatik rapordaki bulguları uygulamadan önce kodu ve mevzuat kaynağını uzmanla doğrulayın.</p>

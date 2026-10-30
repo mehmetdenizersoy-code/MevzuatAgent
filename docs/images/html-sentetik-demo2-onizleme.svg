@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="850" viewBox="0 0 1180 850" role="img" aria-labelledby="title description">
+  <title id="title">Demo 2 sentetik HTML raporu önizlemesi</title>
+  <desc id="description">Demo 2 fixture verisinden hazırlanmış HTML raporunun görsel önizlemesi; gerçek tarama değildir.</desc>
+  <rect width="1180" height="850" fill="#f3f6fa"/>
+  <rect x="34" y="28" width="1112" height="178" rx="18" fill="#17345a"/>
+  <text x="66" y="76" fill="#ffffff" font-family="Arial, sans-serif" font-size="27" font-weight="700">Sentetik Fixture Tarama Raporu — Demo 2</text>
+  <rect x="66" y="96" width="1048" height="54" rx="8" fill="#fff4d6"/>
+  <text x="84" y="120" fill="#59400a" font-family="Arial, sans-serif" font-size="15" font-weight="700">YALNIZCA TEST GÖSTERİMİDİR — Ollama çalıştırılmadı.</text>
+  <text x="84" y="140" fill="#59400a" font-family="Arial, sans-serif" font-size="14">Sentetik fixture örnekleri; gerçek mevzuat tespiti veya hukukî görüş değildir.</text>
+  <g font-family="Arial, sans-serif" font-size="15" fill="#eaf1f8">
+    <text x="68" y="178">Depo: demo2</text>
+    <text x="285" y="178">Model: synthetic-fixture</text>
+    <text x="575" y="178">Dosya: payment_rules.py</text>
+    <text x="880" y="178">Örnek bulgu: 5</text>
+  </g>
+  <g font-family="Arial, sans-serif">
+    <rect x="34" y="230" width="1112" height="155" rx="14" fill="#ffffff" stroke="#e1e7ef"/>
+    <rect x="34" y="230" width="7" height="155" rx="3" fill="#d97706"/>
+    <text x="62" y="268" fill="#16345c" font-size="20" font-weight="700">HIGH · Desteklenmeyen para birimleri kabul ediliyor</text>
+    <text x="62" y="298" fill="#334155" font-size="15">payment_rules.py:9 · İşlev izin verilen para birimi listesini kullanmıyor.</text>
+    <rect x="62" y="316" width="1056" height="43" rx="7" fill="#172b46"/>
+    <text x="82" y="344" fill="#e8eff8" font-family="Menlo, monospace" font-size="15">return True</text>
+    <rect x="34" y="405" width="1112" height="155" rx="14" fill="#ffffff" stroke="#e1e7ef"/>
+    <rect x="34" y="405" width="7" height="155" rx="3" fill="#b45309"/>
+    <text x="62" y="443" fill="#16345c" font-size="20" font-weight="700">HIGH · İade tutarı işlem tutarını aşabiliyor</text>
+    <text x="62" y="473" fill="#334155" font-size="15">payment_rules.py:19 · İşlev iade tutarını ilk işlem tutarıyla karşılaştırmıyor.</text>
+    <rect x="62" y="491" width="1056" height="43" rx="7" fill="#172b46"/>
+    <text x="82" y="519" fill="#e8eff8" font-family="Menlo, monospace" font-size="15">return requested_amount &gt; 0</text>
+    <rect x="34" y="580" width="1112" height="218" rx="14" fill="#ffffff" stroke="#e1e7ef"/>
+    <text x="62" y="620" fill="#16345c" font-size="20" font-weight="700">Diğer fixture örnekleri</text>
+    <text x="62" y="657" fill="#334155" font-size="16">MEDIUM · Yeniden deneme sınırı bir fazla kabul ediliyor · payment_rules.py:14</text>
+    <text x="62" y="692" fill="#334155" font-size="16">MEDIUM · Başvuru numarası gizlenmiyor · payment_rules.py:24</text>
+    <text x="62" y="727" fill="#334155" font-size="16">LOW · İşlem ücreti hesaplanmıyor · payment_rules.py:29</text>
+    <text x="62" y="770" fill="#64748b" font-size="14">Bulgular TEST_FIXTURE_NOT_LAW olarak işaretlidir; gerçek tarama sonucu değildir.</text>
+  </g>
+</svg>

@@ -565,25 +565,6 @@ kod kanıtı, mevzuat kaynağı ve sınırlamalar yer alır. Bulgu çıkmaması
 uyumluluğun kanıtlandığı anlamına gelmez. HTML raporu kullanıcı/kod kaynaklı
 değerleri HTML olarak kaçışlayarak yazar.
 
-Kullanıcının paylaştığı temiz başlangıç ve tarama öncesi model tahmini terminal
-çıktısının görsel düzenlemesi aşağıdadır. Bu görsel, gerçek ekran yakalaması
-değil, paylaşılan terminal metninden oluşturulmuştur; tarama sonucu henüz bu
-çıktıda yer almamaktadır.
-
-![Paylaşılan terminal çıktısından oluşturulan tarama öncesi görünüm](docs/images/terminal-sure-tahmini-onay.svg)
-
-Kullanıcının seçtiği tarama adımının devamı için ayrıca sentetik fixture
-verileriyle bir simülasyon hazırlandı. Bu terminal görünümü ve raporlar gerçek
-Ollama çalıştırması ya da mevzuat taraması değildir; bulgular yalnızca test
-fixture örnekleridir.
-
-![Sentetik fixture sonuçlarının terminal simülasyonu](docs/images/terminal-simulasyon-sonucu.svg)
-
-HTML rapor önizlemeleri:
-
-![Sentetik Demo 1 HTML rapor önizlemesi](docs/images/html-sentetik-demo1-onizleme.svg)
-![Sentetik Demo 2 HTML rapor önizlemesi](docs/images/html-sentetik-demo2-onizleme.svg)
-
 ### Gerçek Ollama çalıştırması (qwen3:4b)
 
 Aşağıdaki görüntüler gerçek bir yerel çalıştırmanın terminal çıktısından
@@ -602,11 +583,6 @@ Raporlar: [Tarama HTML](docs/examples/gercek_qwen3_tarama_raporu.html) ·
 [Remediation HTML](docs/examples/gercek_qwen3_remediation_raporu.html) ·
 [Remediation Markdown](docs/examples/gercek_qwen3_remediation_raporu.md) ·
 [Düzeltme planı](docs/examples/gercek_qwen3_remediation_plani.md).
-
-Rapor dosyaları: [Demo 1 HTML](docs/examples/sentetik_demo1_tarama.html) ·
-[Demo 1 Markdown](docs/examples/sentetik_demo1_tarama.md) ·
-[Demo 2 HTML](docs/examples/simule_fixture_demo2_tarama.html) ·
-[Demo 2 Markdown](docs/examples/simule_fixture_demo2_tarama.md).
 
 Ödeme alanındaki bir kod örneği tek başına mevzuat bulgusu sayılmaz; ilgili
 mevzuat metni ve kod kanıtı uzman tarafından doğrulanmalıdır.

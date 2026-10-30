@@ -14,7 +14,11 @@ from urllib.request import Request, urlopen
 from mevzuat_agent.prompt import load_system_prompt
 from mevzuat_agent.tools.apply_remediation import apply_remediation
 from mevzuat_agent.tools.build_mevzuat_rag import build_mevzuat_rag
-from mevzuat_agent.tools.clone_repositories import clone_repositories
+from mevzuat_agent.tools.clone_repositories import (
+    clone_repositories,
+    load_repository_links,
+    save_repository_links,
+)
 from mevzuat_agent.tools.download_mevzuat import download_mevzuat
 from mevzuat_agent.tools.estimate_scan_cost import (
     DEFAULT_OLLAMA_URL,
@@ -22,7 +26,10 @@ from mevzuat_agent.tools.estimate_scan_cost import (
     list_ollama_models,
 )
 from mevzuat_agent.tools.generate_scan_report import generate_scan_report
-from mevzuat_agent.tools.mevzuat_config import load_mevzuat_links
+from mevzuat_agent.tools.mevzuat_config import (
+    load_mevzuat_links,
+    save_mevzuat_links,
+)
 from mevzuat_agent.tools.prepare_remediation_plan import prepare_remediation_plan
 from mevzuat_agent.tools.propose_remediation import propose_remediation
 from mevzuat_agent.tools.scan_repository import run_git_command
@@ -43,17 +50,16 @@ def run_console() -> None:
     """Sohbet arayüzünden proje sorularını yanıtlar ve pipeline'ı sürdürür."""
     global _LAW_SCOPE_CONFIRMED, _SELECTED_LAW_INDICES
 
+    print(
+        "Merhaba! Ben MevzuatAgent. Seçtiğiniz mevzuat ve Git depolarını "
+        "inceleyip kanıta dayalı tarama raporları oluşturmaya yardımcı olurum."
+    )
     print("MevzuatAgent | Mevzuat uyumluluğu kod tarama aracı")
     print("Raporlar otomatik karar değildir; mevzuat uzmanı tarafından doğrulanmalıdır.")
-    print("Merhaba! MevzuatAgent projesini sorabilir veya pipeline'ı yönlendirebilirsiniz.")
     _SELECTED_LAW_INDICES = None
     _LAW_SCOPE_CONFIRMED = False
     history: list[dict[str, str]] = []
-    try:
-        laws = load_mevzuat_links(_ROOT / "mevzuat_link.json")
-    except (OSError, ValueError, RuntimeError) as exc:
-        print(f"Mevzuat bağlantıları yüklenemedi: {exc}")
-        laws = ()
+    laws = _configure_startup_links()
     if laws:
         print("Başlamak için mevzuat adını/numarasını seçin; ayrıca proje hakkında soru sorabilirsiniz.")
         _print_mevzuat_options(laws)
@@ -290,6 +296,77 @@ def _run_pipeline_step(step: str) -> None:
         "4": _remediate,
     }
     actions[step]()
+
+
+def _configure_startup_links() -> tuple[str, ...]:
+    """Mevzuat ve depo bağlantılarını listeler, kullanıcının yenilerini eklemesini sağlar."""
+    law_path = _ROOT / "mevzuat_link.json"
+    repo_path = _ROOT / "repo_link.json"
+    laws = _load_startup_links("mevzuat", load_mevzuat_links, law_path)
+    print("\nMevzuat bağlantıları:")
+    _print_link_list(laws)
+    laws = _offer_link_additions(
+        "mevzuat",
+        laws,
+        law_path,
+        save_mevzuat_links,
+    )
+
+    repositories = _load_startup_links("depo", load_repository_links, repo_path)
+    print("\nGit depo bağlantıları:")
+    _print_link_list(repositories)
+    _offer_link_additions(
+        "depo",
+        repositories,
+        repo_path,
+        save_repository_links,
+    )
+    return laws
+
+
+def _load_startup_links(
+    label: str,
+    loader: Callable[[Path], tuple[str, ...]],
+    config_path: Path,
+) -> tuple[str, ...]:
+    try:
+        return loader(config_path)
+    except (OSError, ValueError, RuntimeError) as exc:
+        print(f"{label.capitalize()} bağlantıları yüklenemedi: {exc}")
+        return ()
+
+
+def _print_link_list(links: tuple[str, ...]) -> None:
+    if not links:
+        print("  (Kayıtlı bağlantı yok)")
+        return
+    for index, link in enumerate(links, start=1):
+        print(f"  {index}. {link}")
+
+
+def _offer_link_additions(
+    label: str,
+    links: tuple[str, ...],
+    config_path: Path,
+    saver: Callable[[list[str], Path], Path],
+) -> tuple[str, ...]:
+    updated_links = list(links)
+    while _ask_yes(f"Yeni {label} bağlantısı eklemek ister misiniz?"):
+        link = input(f"{label.capitalize()} URL'si (vazgeçmek için boş bırakın): ").strip()
+        if not link:
+            break
+        if link in updated_links:
+            print("Bu bağlantı zaten listede.")
+            continue
+        updated_links.append(link)
+        try:
+            saved_path = saver(updated_links, config_path)
+        except (OSError, ValueError) as exc:
+            updated_links.pop()
+            print(f"Bağlantı eklenemedi: {exc}")
+            continue
+        print(f"Bağlantı kaydedildi: {saved_path}")
+    return tuple(updated_links)
 
 
 def _run_manual_menu() -> bool:

@@ -45,7 +45,7 @@ def clone_repositories(
 
     repo_config = Path(config_path)
     try:
-        repositories = _load_repository_links(repo_config)
+        repositories = load_repository_links(repo_config)
     except ValueError as exc:
         return RepositoryCloneResult((), (str(exc),))
 
@@ -87,6 +87,41 @@ def clone_repositories(
         checkouts.append(RepositoryCheckout(source_url=repo_url, path=destination))
 
     return RepositoryCloneResult(tuple(checkouts), tuple(errors))
+
+
+def load_repository_links(
+    config_path: str | Path = DEFAULT_REPO_CONFIG,
+) -> tuple[str, ...]:
+    """Depo bağlantılarını yapılandırma dosyasından doğrulayarak yükler."""
+    return _load_repository_links(Path(config_path))
+
+
+def save_repository_links(
+    repositories: list[str] | tuple[str, ...],
+    config_path: str | Path = DEFAULT_REPO_CONFIG,
+) -> Path:
+    """Depo bağlantılarını doğrulayarak yapılandırma dosyasına kaydeder."""
+    if not repositories:
+        raise ValueError("At least one repository URL is required")
+
+    validated: list[str] = []
+    for index, repo_url in enumerate(repositories):
+        if not isinstance(repo_url, str) or not _is_repository_url(repo_url.strip()):
+            raise ValueError(
+                f"repos[{index}] must be a valid HTTPS or SSH repository URL"
+            )
+        normalized_url = repo_url.strip()
+        if not _repository_directory_name(normalized_url):
+            raise ValueError(f"repos[{index}] has no valid repository name")
+        validated.append(normalized_url)
+
+    path = Path(config_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"repos": validated}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return path
 
 
 def _load_repository_links(config_path: Path) -> tuple[str, ...]:

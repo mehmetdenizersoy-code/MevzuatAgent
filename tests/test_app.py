@@ -11,7 +11,11 @@ import pytest
 from mevzuat_agent import main
 from mevzuat_agent import console
 from mevzuat_agent.prompt import load_system_prompt
-from mevzuat_agent.tools.clone_repositories import clone_repositories
+from mevzuat_agent.tools.clone_repositories import (
+    clone_repositories,
+    load_repository_links,
+    save_repository_links,
+)
 from mevzuat_agent.tools.apply_remediation import apply_remediation
 from mevzuat_agent.tools.validate_remediation import validate_remediation
 from mevzuat_agent.tools.validate_remediation import _test_command
@@ -91,7 +95,7 @@ def test_chat_requires_law_selection_then_runs_requested_next_step(
     executed = []
     monkeypatch.setattr(console, "_next_pipeline_step", lambda: ("1", "RAG hazırlama"))
     monkeypatch.setattr(console, "_run_pipeline_step", executed.append)
-    answers = iter(("devam", "1", "devam", "0"))
+    answers = iter(("n", "n", "devam", "1", "devam", "0"))
     monkeypatch.setattr("builtins.input", lambda _prompt: next(answers))
 
     console.run_console()
@@ -100,6 +104,36 @@ def test_chat_requires_law_selection_then_runs_requested_next_step(
     assert "önce taranacak mevzuat kapsamını seçin" in output
     assert executed == ["1"]
     assert "Mevzuat kapsamı seçildi: tüm kaynaklar" in output
+
+
+def test_startup_lists_links_and_persists_user_additions(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(console, "_ROOT", tmp_path)
+    save_mevzuat_links(
+        ["https://example.test/law.pdf"],
+        tmp_path / "mevzuat_link.json",
+    )
+    save_repository_links(
+        ["https://github.com/example/existing.git"],
+        tmp_path / "repo_link.json",
+    )
+    answers = iter(
+        ("e", "not-a-url", "n", "e", "https://github.com/example/new.git", "n")
+    )
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(answers))
+
+    laws = console._configure_startup_links()
+
+    assert laws == ("https://example.test/law.pdf",)
+    assert load_mevzuat_links(tmp_path / "mevzuat_link.json") == laws
+    assert load_repository_links(tmp_path / "repo_link.json") == (
+        "https://github.com/example/existing.git",
+        "https://github.com/example/new.git",
+    )
+    output = capsys.readouterr().out
+    assert "Mevzuat bağlantıları:" in output
+    assert "Git depo bağlantıları:" in output
+    assert "Bağlantı eklenemedi" in output
+    assert "Bağlantı kaydedildi" in output
 
 
 def test_chat_response_uses_project_prompt_and_local_ollama(

@@ -66,27 +66,30 @@ raporları üretilir ve etkileşimli remediation akışı burada tamamlanır.
 
 ## İş akışı
 
-1. `mevzuat_link.json` ve `repo_link.json` bağlantı dosyaları doğrulanır.
-2. Mevzuat PDF'leri indirilir. Her sayfanın metni yaklaşık 1.200 karakterlik,
+1. Uygulama kendini tanıtır; kayıtlı mevzuat ve Git depo bağlantılarını listeler.
+   Kullanıcı isterse yeni HTTP(S) mevzuat bağlantısı veya HTTPS/SSH depo
+   bağlantısı ekleyebilir; bağlantılar ilgili JSON dosyasına kaydedilir.
+2. `mevzuat_link.json` ve `repo_link.json` bağlantı dosyaları doğrulanır.
+3. Mevzuat PDF'leri indirilir. Her sayfanın metni yaklaşık 1.200 karakterlik,
    200 karakter örtüşmeli parçalara ayrılır; kaynak dosya, sayfa ve parça
    konumu korunur.
-3. RAG verisi yerel `chunks.jsonl` dosyasına yazılır; BM25 ve isteğe bağlı
+4. RAG verisi yerel `chunks.jsonl` dosyasına yazılır; BM25 ve isteğe bağlı
    çok dilli sentence-transformers embedding araması reciprocal-rank fusion
    (RRF) ile birleştirilir. Tarama sırasında model ayrıca en fazla dört araç
    turunda `mevzuat_ara` ve yalnızca taranan dosyayı okuyabilen `dosya_oku`
    araçlarını seçer; araçlar kod çalıştıramaz veya dosya değiştiremez.
-4. Depolar ancak açık kullanıcı onayından sonra yerel çalışma alanına klonlanır.
-5. Seçilen depo ve dosya kapsamı için kurulu Ollama modelleri ölçülür; model
+5. Depolar ancak açık kullanıcı onayından sonra yerel çalışma alanına klonlanır.
+6. Seçilen depo ve dosya kapsamı için kurulu Ollama modelleri ölçülür; model
    başına tahmini token miktarı ve süre listelenir. En hızlı model önerilir.
    Yerel kullanım için fiyat bilgisi verilmediğinden parasal maliyet üretilmez.
-6. Kullanıcı tahmin edilen modeller arasından birini seçip onaylamadan tarama
+7. Kullanıcı tahmin edilen modeller arasından birini seçip onaylamadan tarama
    başlamaz. İş akışı tarama öncesi branch ve commit değerlerinin tahminle
    aynı olduğunu kontrol eder.
-7. Kod, ilgili mevzuat parçalarıyla birlikte Ollama'ya gönderilir. Kaynak satır
+8. Kod, ilgili mevzuat parçalarıyla birlikte Ollama'ya gönderilir. Kaynak satır
    kanıtı ve mevzuat sayfa/kaynak atfı doğrulanmayan bulgular elenir.
-8. Tarama JSON'u, Markdown ve HTML raporları üretilir. Bulgu varsa en yüksek
+9. Tarama JSON'u, Markdown ve HTML raporları üretilir. Bulgu varsa en yüksek
    öncelikli iki bulgu için öneri planı oluşturulur.
-9. Kullanıcı onaylı düzeltme ayrı worktree'de uygulanır; Markdown ve HTML
+10. Kullanıcı onaylı düzeltme ayrı worktree'de uygulanır; Markdown ve HTML
    diff raporları kullanıcı rapor dizinine kaydedilir ve akış sona erer.
 
 ## Bileşenler
@@ -274,6 +277,11 @@ proje hakkında doğal dille soru sorabilir veya `devam` yazarak pipeline'ın
 önerdiği adımı başlatabilirsiniz. `yardım` komutları, `çıkış` uygulamayı
 kapatır. Sohbet yanıtları sistem promptuna ve güncel pipeline durumuna göre
 yerel Ollama modeliyle üretilir.
+
+Başlangıçta uygulama `mevzuat_link.json` içindeki mevzuat bağlantılarını ve
+`repo_link.json` içindeki depo bağlantılarını listeler. Her iki liste için de
+istenirse yeni bağlantı eklenebilir; girilen bağlantılar biçim kontrolünden
+geçtikten sonra ilgili JSON dosyasına kaydedilir.
 
 Pipeline aşamasını doğrudan sohbet isteğiyle de başlatabilirsiniz: `RAG
 hazırla`, `depoları klonla`, `tarama yap`, `bulguları düzelt`. İndirme,

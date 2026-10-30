@@ -623,7 +623,7 @@ tamamlanır ve ek bir otomatik adım çalıştırmaz.
 ```
 
 Testler için Ollama servisi veya gerçek GitHub bağlantısı gerekmez. Testler
-depo içindeki yerel fixture'ları kullanır; bunlar canlı tarama raporu değildir.
+geçici dizinlerde çalışır ve mock'lanmış bağımlılıklar kullanır.
 
 ## Dizin yapısı
 

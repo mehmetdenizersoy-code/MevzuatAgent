@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "python-pptx>=1.0"]
+dev = ["pytest>=8.0"]
 embeddings = ["sentence-transformers>=3.0"]
 
 [project.scripts]

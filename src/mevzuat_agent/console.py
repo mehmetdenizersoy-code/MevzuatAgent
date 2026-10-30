@@ -529,9 +529,6 @@ def _latest_scan_target() -> tuple[Path, Path] | None:
             raise ValueError(f"Son tarama JSON'u bulgu listesi içermiyor: {scan_path}")
         if not result["findings"]:
             continue
-        model = result.get("model")
-        if isinstance(model, str) and model.startswith("synthetic-fixture"):
-            continue
 
         repository_value = result.get("repository")
         if not isinstance(repository_value, str) or not repository_value.strip():
@@ -633,13 +630,6 @@ def _scan_repository() -> None:
     repository = _select_repository()
     if repository is None:
         return
-    if (
-        repository.parent == _ROOT / "data/test_repositories"
-        and (repository / "payment_rules.py").is_file()
-        and (repository / "scan_result.json").is_file()
-    ):
-        _run_synthetic_fixture_scan(repository)
-        return
     rag_index = _ROOT / "data/legislation/rag/chunks.jsonl"
     if not rag_index.is_file():
         print("Tarama için RAG indeksi bulunamadı; mevzuat hazırlığı başlatılıyor.")
@@ -677,97 +667,6 @@ def _scan_repository() -> None:
         _offer_remediation(repository, artifact)
 
 
-def _run_synthetic_fixture_scan(repository: Path) -> None:
-    """Bilinen test bulgularını doğrulayıp açıkça sentetik rapor olarak üretir."""
-    fixture_path = repository / "scan_result.json"
-    try:
-        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"Sentetik test bulgusu JSON'u geçersiz: {fixture_path}") from exc
-    if not isinstance(fixture, dict) or not isinstance(fixture.get("findings"), list):
-        raise ValueError(f"Sentetik test bulgusu listesi bulunamadı: {fixture_path}")
-
-    findings = fixture["findings"]
-    grouped_findings: dict[str, list[dict]] = {}
-    for item in findings:
-        if not isinstance(item, dict):
-            raise ValueError("Sentetik test bulgusu geçerli bir nesne değil.")
-        relative_path = item.get("file")
-        if not isinstance(relative_path, str) or Path(relative_path).is_absolute():
-            raise ValueError("Sentetik bulgunun dosya yolu geçersiz.")
-        source_path = (repository / relative_path).resolve()
-        if not source_path.is_relative_to(repository.resolve()) or not source_path.is_file():
-            raise ValueError(f"Sentetik bulgunun kaynak dosyası bulunamadı: {relative_path}")
-        code_lines = source_path.read_text(encoding="utf-8").splitlines()
-        line = item.get("line")
-        evidence = item.get("evidence")
-        if (
-            not isinstance(line, int)
-            or isinstance(line, bool)
-            or line < 1
-            or line > len(code_lines)
-            or not isinstance(evidence, str)
-            or " ".join(evidence.split()) not in " ".join(code_lines[line - 1].split())
-        ):
-            raise ValueError(
-                f"Sentetik bulgu kanıtı kaynak kodla eşleşmiyor: {relative_path}:{line}"
-            )
-        grouped_findings.setdefault(relative_path, []).append(item)
-
-    output_dir = _ROOT / "data/reports/scans"
-    output_path = output_dir / f"{repository.name}_synthetic.json"
-    branch = run_git_command(repository, "rev-parse", "--abbrev-ref", "HEAD")
-    commit = run_git_command(repository, "rev-parse", "--short", "HEAD")
-    result = {
-        **fixture,
-        "repository": f"sentetik-test/{repository.name}",
-        "branch_commit": f"{branch}@{commit}",
-        "model": "synthetic-fixture (LLM taraması yapılmadı)",
-        "scan_scope": "Sentetik test: önceden tanımlı örnek bulgular",
-        "scanned_at": datetime.now(timezone.utc).isoformat(),
-        "files_considered": len(grouped_findings),
-        "files_scanned": len(grouped_findings),
-        "findings": findings,
-        "file_results": [
-            {
-                "path": path,
-                "status": "synthetic_fixture",
-                "findings": items,
-                "error": None,
-            }
-            for path, items in sorted(grouped_findings.items())
-        ],
-        "limitations": [
-            "Sentetik test bulgularıdır; gerçek mevzuat taraması veya hukukî tespit değildir."
-        ],
-        "output_path": str(output_path),
-    }
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(
-        json.dumps(result, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    markdown_path, html_path = generate_scan_report(output_path)
-    plan_path = prepare_remediation_plan(
-        output_path,
-        output_path=output_path.with_name(f"{output_path.stem}_remediation_plan.md"),
-    )
-    print("Sentetik test bulguları üretildi; bu işlem Ollama veya gerçek mevzuat kullanmadı.")
-    print(f"JSON: {output_path}")
-    _print_report_path("Tarama Markdown", markdown_path)
-    _print_report_path("Tarama HTML", html_path)
-    print(f"Örnek düzeltme planı: {plan_path}")
-    if _ask_yes(
-        "Sentetik bulgularla yalnızca test amaçlı bir Ollama düzeltme önerisi "
-        "hazırlansın mı? Bu gerçek mevzuat remediation'ı değildir."
-    ):
-        models = list_ollama_models(DEFAULT_OLLAMA_URL)
-        if not models:
-            raise RuntimeError("Ollama'da remediation için kurulu model bulunamadı.")
-        model = _select_ollama_model(models)
-        _remediate(repository, output_path, model_override=model)
-
-
 def _offer_remediation(repository: Path, artifact: RepositoryScanArtifacts) -> None:
     _present_scan_report(artifact)
     if artifact.scan.findings:
@@ -798,7 +697,6 @@ def _offer_remediation(repository: Path, artifact: RepositoryScanArtifacts) -> N
             "Doğrulanmış bulgu bulunmadı; remediation için önce "
             "kanıtlanmış bulgu içeren bir tarama gerekir."
         )
-    _offer_deterministic_fixture(repository)
 
 
 def _present_scan_report(artifact: RepositoryScanArtifacts) -> None:
@@ -830,24 +728,6 @@ def _present_scan_report(artifact: RepositoryScanArtifacts) -> None:
         print("Doğrulanmış bulgu yok; bu, mevzuata uygunluk kanıtı değildir.")
     _print_report_path("Tarama Markdown", artifact.markdown_report)
     _print_report_path("Tarama HTML", artifact.html_report)
-
-
-def _offer_deterministic_fixture(repository: Path) -> None:
-    if repository.name not in {"demo1", "demo2"}:
-        return
-    fixture = _ROOT / "data/test_repositories" / repository.name
-    if not (
-        fixture.is_dir()
-        and (fixture / "payment_rules.py").is_file()
-        and (fixture / "scan_result.json").is_file()
-    ):
-        return
-    print(
-        "Bu demo için önceden tanımlı sentetik test bulguları mevcut. "
-        "Bunlar yalnızca rapor/ekran görüntüsü provasıdır; gerçek mevzuat bulgusu değildir."
-    )
-    if _ask_yes("Sentetik test bulgularıyla ayrı bir örnek rapor oluşturulsun mu?"):
-        _run_synthetic_fixture_scan(fixture)
 
 
 def _remediate(

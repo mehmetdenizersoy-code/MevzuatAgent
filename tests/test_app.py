@@ -1824,41 +1824,6 @@ def _run_git(repository: Path, *arguments: str) -> str:
     return result.stdout.strip()
 
 
-def test_synthetic_demo_repositories_have_ten_verified_fixable_findings(tmp_path):
-    fixture_root = Path(__file__).parent / "fixtures" / "synthetic_demo_repositories"
-    total_findings = 0
-
-    for demo_name in ("demo1", "demo2"):
-        demo_path = fixture_root / demo_name
-        scan_path = demo_path / "scan_result.json"
-        result = json.loads(scan_path.read_text(encoding="utf-8"))
-        source_code = (demo_path / "payment_rules.py").read_text(encoding="utf-8")
-
-        assert len(result["findings"]) == 5
-        assert all(
-            finding["mevzuat_source"] == "TEST_FIXTURE_NOT_LAW"
-            for finding in result["findings"]
-        )
-        validated = validate_scan_findings(
-            {"findings": result["findings"]},
-            "payment_rules.py",
-            source_code,
-            [{"source": "TEST_FIXTURE_NOT_LAW", "page": 1, "text": "synthetic"}],
-        )
-        assert len(validated) == 5
-
-        plan_path = prepare_remediation_plan(
-            scan_path,
-            output_path=tmp_path / f"{demo_name}_plan.md",
-        )
-        plan = plan_path.read_text(encoding="utf-8")
-        assert "TEST_FIXTURE_NOT_LAW" in plan
-        assert "kullanıcı onayı gerekir" in plan
-        total_findings += len(validated)
-
-    assert total_findings == 10
-
-
 def test_langchain_scan_workflow_requires_approval_and_generates_artifacts(tmp_path):
     repository = tmp_path / "demo"
     repository.mkdir()
@@ -2117,58 +2082,6 @@ def test_scan_result_without_findings_explains_model_error_and_skips_remediation
     assert "Gerçek tarama raporunda doğrulanmış bulgu yok" in output
 
 
-def test_failed_demo_scan_offers_deterministic_synthetic_report(
-    tmp_path, monkeypatch, capsys
-):
-    repository = tmp_path / "data/repositories/demo1"
-    repository.mkdir(parents=True)
-    fixture = tmp_path / "data/test_repositories/demo1"
-    fixture.mkdir(parents=True)
-    (fixture / "payment_rules.py").write_text("def example():\n    return None\n", encoding="utf-8")
-    (fixture / "scan_result.json").write_text("{}", encoding="utf-8")
-    monkeypatch.setattr(console, "_ROOT", tmp_path)
-    monkeypatch.setattr(console, "_ask_yes", lambda _question: False)
-    questions = []
-    monkeypatch.setattr(console, "_ask_yes", lambda question: questions.append(question) or True)
-    generated = []
-    monkeypatch.setattr(console, "_run_synthetic_fixture_scan", generated.append)
-    scan = RepositoryScanResult(
-        repository=str(repository),
-        branch_commit="main@abc123",
-        model="gemma3:4b",
-        scan_scope="demo",
-        scanned_at="2026-10-29T00:00:00+00:00",
-        files_considered=1,
-        files_scanned=0,
-        findings=(),
-        file_results=(
-            ScannedFile(
-                path="PaymentService.java",
-                status="error",
-                findings=(),
-                error="Invalid JSON response",
-            ),
-        ),
-        limitations=(),
-        output_path=tmp_path / "scan.json",
-    )
-    artifact = RepositoryScanArtifacts(
-        scan=scan,
-        markdown_report=tmp_path / "scan.md",
-        html_report=tmp_path / "scan.html",
-        remediation_plan=None,
-    )
-
-    console._offer_remediation(repository, artifact)
-
-    assert generated == [fixture]
-    assert len(questions) == 1
-    assert "Sentetik test bulgularıyla ayrı bir örnek rapor" in questions[0]
-    output = capsys.readouterr().out
-    assert "önceden tanımlı sentetik test bulguları mevcut" in output
-    assert "gerçek mevzuat bulgusu değildir" in output
-
-
 def test_remediation_stops_when_scan_has_no_findings(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(console, "_ROOT", tmp_path)
     scan_path = tmp_path / "scan.json"
@@ -2339,64 +2252,6 @@ def test_pipeline_recovers_from_invalid_latest_scan(tmp_path, monkeypatch, capsy
 
     assert console._next_pipeline_step()[0] == "3"
     assert "Son tarama remediation için kullanılamıyor" in capsys.readouterr().out
-
-
-def test_synthetic_fixture_scan_generates_findings_and_reports(
-    tmp_path, monkeypatch, capsys
-):
-    monkeypatch.setattr(console, "_ROOT", tmp_path)
-    monkeypatch.setattr(console, "_ask_yes", lambda _question: False)
-    repository = tmp_path / "data/test_repositories/demo1"
-    repository.mkdir(parents=True)
-    _run_git(repository, "init", "-b", "main")
-    _run_git(repository, "config", "user.name", "Test")
-    _run_git(repository, "config", "user.email", "test@example.com")
-    (repository / "payment_rules.py").write_text(
-        "def mask_reference(value):\n    return value\n",
-        encoding="utf-8",
-    )
-    (repository / "scan_result.json").write_text(
-        json.dumps(
-            {
-                "findings": [
-                    {
-                        "severity": "HIGH",
-                        "title": "Synthetic test finding",
-                        "file": "payment_rules.py",
-                        "line": 2,
-                        "evidence": "    return value",
-                        "explanation": "Fixture-only example.",
-                        "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
-                        "mevzuat_page": 1,
-                        "recommendation": "Change the synthetic test rule.",
-                        "confidence": 10,
-                    }
-                ]
-            }
-        ),
-        encoding="utf-8",
-    )
-    _run_git(repository, "add", "payment_rules.py", "scan_result.json")
-    _run_git(repository, "commit", "-m", "Add synthetic fixture")
-
-    console._run_synthetic_fixture_scan(repository)
-
-    output_path = tmp_path / "data/reports/scans/demo1_synthetic.json"
-    result = json.loads(output_path.read_text(encoding="utf-8"))
-    assert len(result["findings"]) == 1
-    assert result["model"] == "synthetic-fixture (LLM taraması yapılmadı)"
-    assert result["findings"][0]["mevzuat_source"] == "TEST_FIXTURE_NOT_LAW"
-    assert output_path.with_suffix(".md").is_file()
-    assert output_path.with_suffix(".html").is_file()
-    assert "Kaynak dosyası kapsamı" in output_path.with_suffix(".md").read_text(
-        encoding="utf-8"
-    )
-    assert "Kaynak dosyası kapsamı" in output_path.with_suffix(".html").read_text(
-        encoding="utf-8"
-    )
-    assert output_path.with_name("demo1_synthetic_remediation_plan.md").is_file()
-    assert console._latest_scan_target() is None
-    assert "Sentetik test bulguları üretildi" in capsys.readouterr().out
 
 
 def test_remediation_applies_and_reports_latest_scan_without_test_or_pr_followup(

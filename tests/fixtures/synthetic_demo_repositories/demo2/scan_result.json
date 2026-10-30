@@ -1,0 +1,82 @@
+{
+  "repository": "demo2",
+  "branch_commit": "test-fixture",
+  "model": "synthetic-fixture",
+  "scan_scope": "Sentetik test verisi; yalnızca test akışı",
+  "scanned_at": "2026-10-29T00:00:00+00:00",
+  "files_scanned": 1,
+  "files_considered": 1,
+  "findings": [
+    {
+      "severity": "HIGH",
+      "title": "Desteklenmeyen para birimleri kabul ediliyor",
+      "file": "payment_rules.py",
+      "line": 9,
+      "evidence": "    return True",
+      "explanation": "İşlev izin verilen para birimi listesini kullanmıyor.",
+      "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
+      "mevzuat_page": 1,
+      "recommendation": "Para biriminin desteklenenler kümesinde olup olmadığını denetleyin.",
+      "confidence": 10
+    },
+    {
+      "severity": "MEDIUM",
+      "title": "Yeniden deneme sınırı bir fazla kabul ediliyor",
+      "file": "payment_rules.py",
+      "line": 14,
+      "evidence": "    return attempt <= limit",
+      "explanation": "Deneme sayısı sınıra eşit olduğunda yeni denemeye izin veriliyor.",
+      "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
+      "mevzuat_page": 1,
+      "recommendation": "Yeni deneme için mevcut deneme sayısının sınırdan küçük olmasını şart koşun.",
+      "confidence": 9
+    },
+    {
+      "severity": "HIGH",
+      "title": "İade tutarı işlem tutarını aşabiliyor",
+      "file": "payment_rules.py",
+      "line": 19,
+      "evidence": "    return requested_amount > 0",
+      "explanation": "İşlev iade tutarını ilk işlem tutarıyla karşılaştırmıyor.",
+      "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
+      "mevzuat_page": 1,
+      "recommendation": "İade tutarının sıfırdan büyük ve ilk işlem tutarından küçük veya eşit olduğunu denetleyin.",
+      "confidence": 10
+    },
+    {
+      "severity": "MEDIUM",
+      "title": "Başvuru numarası gizlenmiyor",
+      "file": "payment_rules.py",
+      "line": 24,
+      "evidence": "    return reference",
+      "explanation": "Gösterim işlevi başvuru numarasını değiştirmeden döndürüyor.",
+      "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
+      "mevzuat_page": 1,
+      "recommendation": "Yalnızca son karakterleri gösterip önceki karakterleri maskeleyin.",
+      "confidence": 10
+    },
+    {
+      "severity": "LOW",
+      "title": "İşlem ücreti hesaplanmıyor",
+      "file": "payment_rules.py",
+      "line": 29,
+      "evidence": "    return amount",
+      "explanation": "Ücret oranı hesaplamada kullanılmıyor.",
+      "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
+      "mevzuat_page": 1,
+      "recommendation": "Tutarı ücret oranıyla çarparak işlem ücretini hesaplayın.",
+      "confidence": 9
+    }
+  ],
+  "file_results": [
+    {
+      "path": "payment_rules.py",
+      "status": "scanned",
+      "findings": [],
+      "error": null
+    }
+  ],
+  "limitations": [
+    "Yalnızca test için sentetik veri; gerçek mevzuat tespiti veya hukukî görüş değildir."
+  ]
+}

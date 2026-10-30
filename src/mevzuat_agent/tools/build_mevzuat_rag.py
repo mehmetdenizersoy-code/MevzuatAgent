@@ -5,6 +5,9 @@ bilgisini korur.
 """
 
 from dataclasses import dataclass
+from functools import lru_cache
+import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -13,6 +16,9 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 from rank_bm25 import BM25Okapi
+
+DEFAULT_EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+_RRF_K = 60
 
 
 @dataclass(frozen=True)
@@ -48,8 +54,9 @@ def build_mevzuat_rag(
     *,
     chunk_size: int = 1200,
     chunk_overlap: int = 200,
+    embedding_model: str | None = DEFAULT_EMBEDDING_MODEL,
 ) -> RagBuildResult:
-    """PDF metnini parçalayıp yerel indekse yazar."""
+    """PDF metnini parçalayıp BM25 ve varsa embedding indekslerine yazar."""
     if chunk_size <= 0:
         raise ValueError("chunk_size must be greater than zero")
     if chunk_overlap < 0 or chunk_overlap >= chunk_size:
@@ -101,11 +108,38 @@ def build_mevzuat_rag(
         for chunk in chunks:
             index_file.write(json.dumps(chunk.__dict__, ensure_ascii=False) + "\n")
 
+    embedding_path = _embedding_path(index_path)
+    if embedding_model is None:
+        embedding_path.unlink(missing_ok=True)
+        retrieval = "BM25 lexical"
+        indexed_embedding_model = None
+    elif importlib.util.find_spec("sentence_transformers") is None:
+        embedding_path.unlink(missing_ok=True)
+        retrieval = "BM25 lexical (install the embeddings extra for hybrid search)"
+        indexed_embedding_model = None
+    else:
+        vectors = _encode_texts([chunk.text for chunk in chunks], embedding_model)
+        embedding_path.write_text(
+            json.dumps(
+                {
+                    "model": embedding_model,
+                    "chunks_sha256": _chunks_sha256(chunks),
+                    "vectors": vectors,
+                },
+                ensure_ascii=False,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        retrieval = "BM25 + multilingual sentence embeddings (reciprocal rank fusion)"
+        indexed_embedding_model = embedding_model
+
     manifest_path = target_dir / "manifest.json"
     manifest_path.write_text(
         json.dumps(
             {
-                "retrieval": "BM25 lexical",
+                "retrieval": retrieval,
+                "embedding_model": indexed_embedding_model,
                 "chunk_size": chunk_size,
                 "chunk_overlap": chunk_overlap,
                 "documents": [path.name for path in documents],
@@ -131,22 +165,119 @@ def search_mevzuat_rag(
     if top_k <= 0:
         raise ValueError("top_k must be greater than zero")
     terms = _tokenize(query)
-    if not terms:
-        return ()
 
     path = Path(index_path)
     chunks = tuple(_read_chunks(path))
     if not chunks:
         return ()
 
-    scores = BM25Okapi([_tokenize(chunk.text) for chunk in chunks]).get_scores(terms)
-    query_terms = set(terms)
-    matches = [
-        RagSearchResult(chunk=chunk, score=float(score))
-        for chunk, score in zip(chunks, scores, strict=True)
-        if query_terms.intersection(_tokenize(chunk.text))
-    ]
-    return tuple(sorted(matches, key=lambda match: match.score, reverse=True)[:top_k])
+    lexical_matches: list[tuple[int, float]] = []
+    lexical_ranks: dict[int, int] = {}
+    if terms:
+        scores = BM25Okapi([_tokenize(chunk.text) for chunk in chunks]).get_scores(terms)
+        query_terms = set(terms)
+        lexical_matches = sorted(
+            (
+                (index, float(score))
+                for index, (chunk, score) in enumerate(zip(chunks, scores, strict=True))
+                if query_terms.intersection(_tokenize(chunk.text))
+            ),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+        lexical_ranks = {
+            chunk_index: rank
+            for rank, (chunk_index, _) in enumerate(lexical_matches)
+        }
+
+    embedding_path = _embedding_path(path)
+    if not embedding_path.is_file():
+        if not terms:
+            return ()
+        return tuple(
+            RagSearchResult(chunks[index], score)
+            for index, score in lexical_matches[:top_k]
+        )
+
+    embedding_index = json.loads(embedding_path.read_text(encoding="utf-8"))
+    if (
+        embedding_index.get("chunks_sha256") != _chunks_sha256(chunks)
+        or not isinstance(embedding_index.get("model"), str)
+        or not isinstance(embedding_index.get("vectors"), list)
+        or len(embedding_index["vectors"]) != len(chunks)
+    ):
+        raise ValueError(f"{embedding_path}: embedding index does not match the chunk index")
+
+    query_vector = _encode_texts([query], embedding_index["model"])[0]
+    vectors = embedding_index["vectors"]
+    if not query_vector or any(
+        not isinstance(vector, list) or len(vector) != len(query_vector)
+        for vector in vectors
+    ):
+        raise ValueError(f"{embedding_path}: invalid embedding vector dimensions")
+
+    semantic_matches = sorted(
+        (
+            (index, sum(float(left) * float(right) for left, right in zip(
+                query_vector, vector, strict=True
+            )))
+            for index, vector in enumerate(vectors)
+        ),
+        key=lambda item: item[1],
+        reverse=True,
+    )
+    semantic_ranks = {
+        chunk_index: rank
+        for rank, (chunk_index, _) in enumerate(semantic_matches)
+    }
+    fused_scores = {
+        index: 1 / (_RRF_K + rank)
+        for index, rank in lexical_ranks.items()
+    }
+    for index, rank in semantic_ranks.items():
+        fused_scores[index] = fused_scores.get(index, 0) + 1 / (_RRF_K + rank)
+
+    return tuple(
+        RagSearchResult(chunks[index], score)
+        for index, score in sorted(
+            fused_scores.items(),
+            key=lambda item: item[1],
+            reverse=True,
+        )[:top_k]
+    )
+
+
+@lru_cache(maxsize=2)
+def _load_embedding_model(model_name: str):
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ImportError as exc:
+        raise RuntimeError(
+            "Embedding index requires sentence-transformers; install the "
+            "'embeddings' extra."
+        ) from exc
+    return SentenceTransformer(model_name)
+
+
+def _encode_texts(texts: list[str], model_name: str) -> list[list[float]]:
+    vectors = _load_embedding_model(model_name).encode(
+        texts,
+        normalize_embeddings=True,
+    )
+    return [[float(value) for value in vector] for vector in vectors]
+
+
+def _embedding_path(index_path: Path) -> Path:
+    return index_path.with_name(f"{index_path.stem}.embeddings.json")
+
+
+def _chunks_sha256(chunks: tuple[RagChunk, ...] | list[RagChunk]) -> str:
+    serialized = json.dumps(
+        [chunk.__dict__ for chunk in chunks],
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
 def _read_chunks(index_path: Path):

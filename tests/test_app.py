@@ -18,6 +18,8 @@ from mevzuat_agent.tools.validate_remediation import _test_command
 from mevzuat_agent.tools.create_github_pr import create_github_pr
 from mevzuat_agent.tools.propose_remediation import propose_remediation
 from mevzuat_agent.tools.build_mevzuat_rag import (
+    RagChunk,
+    _chunks_sha256,
     build_mevzuat_rag,
     search_mevzuat_rag,
 )
@@ -37,6 +39,7 @@ from mevzuat_agent.tools.scan_repository import (
     RepositoryScanResult,
     ScannedFile,
     ScanFinding,
+    _ask_ollama,
     _expand_retrieval_query,
     scan_repository,
     validate_scan_findings,
@@ -366,6 +369,135 @@ def test_search_mevzuat_rag_returns_relevant_chunks(tmp_path):
     assert len(results) == 1
     assert results[0].chunk.source == "law.pdf"
     assert results[0].chunk.page == 3
+
+
+def test_search_mevzuat_rag_fuses_semantic_only_matches(tmp_path):
+    index_path = tmp_path / "chunks.jsonl"
+    chunks = (
+        RagChunk(
+            text="Kart hamili verileri yetkisiz kişilere açıklanamaz.",
+            source="law.pdf",
+            page=2,
+            start_index=0,
+        ),
+        RagChunk(
+            text="Müşteri mahremiyeti korunmalı ve bilgiler gizli tutulmalıdır.",
+            source="regulation.pdf",
+            page=8,
+            start_index=50,
+        ),
+    )
+    index_path.write_text(
+        "".join(json.dumps(chunk.__dict__, ensure_ascii=False) + "\n" for chunk in chunks),
+        encoding="utf-8",
+    )
+    index_path.with_name("chunks.embeddings.json").write_text(
+        json.dumps(
+            {
+                "model": "test-embedding-model",
+                "chunks_sha256": _chunks_sha256(chunks),
+                "vectors": [[0.0, 1.0], [1.0, 0.0]],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with patch(
+        "mevzuat_agent.tools.build_mevzuat_rag._encode_texts",
+        return_value=[[1.0, 0.0]],
+    ):
+        results = search_mevzuat_rag(
+            "confidentiality",
+            index_path,
+            top_k=1,
+        )
+
+    assert len(results) == 1
+    assert results[0].chunk.source == "regulation.pdf"
+    assert results[0].chunk.page == 8
+
+
+def test_ollama_scan_agent_uses_legal_search_and_bounded_file_tools(tmp_path):
+    rag_index = tmp_path / "chunks.jsonl"
+    legal_quote = "Üye işyerleri kart hamili bilgilerini açıklayamaz."
+    rag_index.write_text(
+        json.dumps(
+            {
+                "text": legal_quote,
+                "source": "law.pdf",
+                "page": 7,
+                "start_index": 0,
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    tool_responses = iter(
+        (
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                        {
+                            "function": {
+                                "name": "mevzuat_ara",
+                                "arguments": {"query": "üye işyeri kart hamili"},
+                            }
+                        }
+                    ],
+                }
+            },
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                        {
+                            "function": {
+                                "name": "dosya_oku",
+                                "arguments": {
+                                    "file_path": "payments.py",
+                                    "start_line": 1,
+                                    "end_line": 2,
+                                },
+                            }
+                        }
+                    ],
+                }
+            },
+            {"message": {"role": "assistant", "content": '{"findings": []}'}},
+        )
+    )
+    requests_seen = []
+
+    def fake_urlopen(request, timeout):
+        assert timeout == 1
+        requests_seen.append(json.loads(request.data))
+        return BytesIO(json.dumps(next(tool_responses)).encode("utf-8"))
+
+    context = []
+    with patch("mevzuat_agent.tools.scan_repository.urlopen", side_effect=fake_urlopen):
+        response = _ask_ollama(
+            "1: def send():\n2:     publish(cardholder)",
+            context,
+            model="test-model",
+            ollama_url="http://localhost:11434/api/chat",
+            timeout_seconds=1,
+            source_path="payments.py",
+            source_code="def send():\n    publish(cardholder)",
+            rag_index_path=rag_index,
+        )
+
+    assert response == '{"findings": []}'
+    assert len(requests_seen) == 3
+    assert [tool["function"]["name"] for tool in requests_seen[0]["tools"]] == [
+        "mevzuat_ara",
+        "dosya_oku",
+    ]
+    assert context == [{"source": "law.pdf", "page": 7, "text": legal_quote}]
+    assert "2:     publish(cardholder)" in requests_seen[2]["messages"][-1]["content"]
 
 
 def test_build_mevzuat_rag_validates_chunk_sizes(tmp_path):
@@ -1345,7 +1477,7 @@ def _run_git(repository: Path, *arguments: str) -> str:
 
 
 def test_synthetic_demo_repositories_have_ten_verified_fixable_findings(tmp_path):
-    fixture_root = Path(__file__).parents[1] / "data" / "test_repositories"
+    fixture_root = Path(__file__).parent / "fixtures" / "synthetic_demo_repositories"
     total_findings = 0
 
     for demo_name in ("demo1", "demo2"):

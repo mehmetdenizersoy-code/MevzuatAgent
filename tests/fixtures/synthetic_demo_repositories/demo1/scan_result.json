@@ -1,0 +1,82 @@
+{
+  "repository": "demo1",
+  "branch_commit": "test-fixture",
+  "model": "synthetic-fixture",
+  "scan_scope": "Sentetik test verisi; yalnızca test akışı",
+  "scanned_at": "2026-10-29T00:00:00+00:00",
+  "files_scanned": 1,
+  "files_considered": 1,
+  "findings": [
+    {
+      "severity": "HIGH",
+      "title": "Ödeme başvurusu gizlenmiyor",
+      "file": "payment_rules.py",
+      "line": 6,
+      "evidence": "    return value",
+      "explanation": "Maskeleme işlevi girdiyi olduğu gibi döndürüyor.",
+      "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
+      "mevzuat_page": 1,
+      "recommendation": "Son dört karakteri koruyup önceki karakterleri maskeleyin.",
+      "confidence": 10
+    },
+    {
+      "severity": "MEDIUM",
+      "title": "Sıfır tutar geçerli sayılıyor",
+      "file": "payment_rules.py",
+      "line": 11,
+      "evidence": "    return amount >= 0",
+      "explanation": "İşlev sıfır tutara da olumlu yanıt veriyor.",
+      "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
+      "mevzuat_page": 1,
+      "recommendation": "Pozitif tutar için sıfırdan büyük olma koşulunu kullanın.",
+      "confidence": 10
+    },
+    {
+      "severity": "MEDIUM",
+      "title": "Son kullanma ayı dikkate alınmıyor",
+      "file": "payment_rules.py",
+      "line": 21,
+      "evidence": "    return expiry_year < current_year",
+      "explanation": "Aynı yıldaki ay karşılaştırması yapılmıyor.",
+      "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
+      "mevzuat_page": 1,
+      "recommendation": "Yıl eşitse son kullanma ayını da mevcut ayla karşılaştırın.",
+      "confidence": 9
+    },
+    {
+      "severity": "LOW",
+      "title": "Taksit tutarı hesaplanmıyor",
+      "file": "payment_rules.py",
+      "line": 26,
+      "evidence": "    return total",
+      "explanation": "Taksit tutarı toplam tutardan ve taksit sayısından hesaplanmıyor.",
+      "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
+      "mevzuat_page": 1,
+      "recommendation": "Geçerli taksit sayısı için toplamı taksit sayısına bölün.",
+      "confidence": 10
+    },
+    {
+      "severity": "LOW",
+      "title": "İsim alanındaki boşluklar temizlenmiyor",
+      "file": "payment_rules.py",
+      "line": 31,
+      "evidence": "    return name",
+      "explanation": "İşlev baştaki ve sondaki boşlukları kaldırmıyor.",
+      "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
+      "mevzuat_page": 1,
+      "recommendation": "İsim metninin başındaki ve sonundaki boşlukları temizleyin.",
+      "confidence": 10
+    }
+  ],
+  "file_results": [
+    {
+      "path": "payment_rules.py",
+      "status": "scanned",
+      "findings": [],
+      "error": null
+    }
+  ],
+  "limitations": [
+    "Yalnızca test için sentetik veri; gerçek mevzuat tespiti veya hukukî görüş değildir."
+  ]
+}

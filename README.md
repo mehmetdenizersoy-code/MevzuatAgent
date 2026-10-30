@@ -48,7 +48,7 @@ adımlarını başlatır. Masaüstü/web arayüzü veya kalıcı sohbet ajanı d
 | JSON yapılandırmalarını doğrulama | Uygulandı |
 | Mevzuat PDF'lerini indirme | Uygulandı |
 | PDF metnini orta boyutlu, örtüşen parçalara ayırma | Uygulandı |
-| Yerel mevzuat araması | Uygulandı; BM25 anahtar kelime araması |
+| Yerel mevzuat araması | BM25 anahtar kelime ve isteğe bağlı sentence-transformers embedding aramasını RRF ile birleştirir |
 | Kullanıcı onayından sonra depo klonlama | Araçta uygulandı |
 | Kurulu Ollama modellerinin hızını ölçme ve süre tahmini | Uygulandı |
 | Tahmin, tarama onayı, sınırlı tarama ve raporlamayı LangChain ile bağlama | Uygulandı; Python API |
@@ -70,8 +70,11 @@ commit veya GitHub işlemlerine otomatik olarak aktarılmaz.
 2. Mevzuat PDF'leri indirilir. Her sayfanın metni yaklaşık 1.200 karakterlik,
    200 karakter örtüşmeli parçalara ayrılır; kaynak dosya, sayfa ve parça
    konumu korunur.
-3. RAG verisi yerel `chunks.jsonl` dosyasına yazılır ve BM25 ile aranır.
-   Mevcut uygulama embedding tabanlı vektör veritabanı kullanmaz.
+3. RAG verisi yerel `chunks.jsonl` dosyasına yazılır; BM25 ve isteğe bağlı
+   çok dilli sentence-transformers embedding araması reciprocal-rank fusion
+   (RRF) ile birleştirilir. Tarama sırasında model ayrıca en fazla dört araç
+   turunda `mevzuat_ara` ve yalnızca taranan dosyayı okuyabilen `dosya_oku`
+   araçlarını seçer; araçlar kod çalıştıramaz veya dosya değiştiremez.
 4. Depolar ancak açık kullanıcı onayından sonra yerel çalışma alanına klonlanır.
 5. Seçilen depo ve dosya kapsamı için kurulu Ollama modelleri ölçülür; model
    başına tahmini token miktarı ve süre listelenir. En hızlı model önerilir.
@@ -93,7 +96,7 @@ commit veya GitHub işlemlerine otomatik olarak aktarılmaz.
 | `src/mevzuat_agent/tools/validate_config.py` | Bağlantı JSON dosyalarını doğrular. |
 | `src/mevzuat_agent/tools/mevzuat_config.py` | Mevzuat bağlantılarını okur ve kaydeder. |
 | `src/mevzuat_agent/tools/download_mevzuat.py` | Mevzuat belgelerini indirir. |
-| `src/mevzuat_agent/tools/build_mevzuat_rag.py` | PDF metnini parçalar ve BM25 indeksini kurar. |
+| `src/mevzuat_agent/tools/build_mevzuat_rag.py` | PDF metnini parçalar, BM25 ve varsa çok dilli embedding indekslerini kurar. |
 | `src/mevzuat_agent/tools/clone_repositories.py` | Açık onayla depoları klonlar; depo kodunu çalıştırmaz. |
 | `src/mevzuat_agent/tools/estimate_scan_cost.py` | Kurulu modelleri ölçer ve tarama süresini tahmin eder. |
 | `src/mevzuat_agent/tools/scan_repository.py` | Sınırlı dosya taraması yapar, kanıtı doğrulanmış bulguları kaydeder. |
@@ -158,6 +161,43 @@ git clone https://github.com/mehmetdenizersoy-code/MevzuatAgent.git
 cd MevzuatAgent
 ./install.sh
 ```
+
+### Windows kurulumu
+
+PowerShell'de Python 3.10+ ve Git'i kurup proje dizininde şu komutları çalıştırın:
+
+```powershell
+git clone https://github.com/mehmetdenizersoy-code/MevzuatAgent.git
+cd MevzuatAgent
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+python -m pytest -q
+python -m mevzuat_agent
+```
+
+PowerShell sanal ortam etkinleştirmesini engellerse, kullanıcı kapsamı için
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` komutunu çalıştırıp
+etkinleştirmeyi tekrarlayın. Kod taraması için Ollama'yı Windows'a kurun,
+Ollama uygulamasını başlatın ve `ollama pull gemma3:4b` ile yerel model indirin.
+Ardından uygulamadan mevzuat PDF'lerini indirip RAG indeksini hazırlayın.
+
+### Hibrit mevzuat aramasını etkinleştirme
+
+Sentence-transformers embedding desteği isteğe bağlıdır. Model paketini kurup
+RAG indeksini yeniden oluşturun:
+
+```bash
+.venv/bin/python -m pip install -e '.[embeddings]'
+```
+
+```powershell
+python -m pip install -e ".[embeddings]"
+```
+
+İlk indeks oluşturma sırasında çok dilli embedding modeli indirilir ve yerelde
+çalıştırılır. Bu ekstra kurulmazsa BM25 araması çalışmaya devam eder.
 
 Kurulum dosyasının seçenekleri:
 
@@ -291,8 +331,8 @@ eşleme, uygulamanın gösterdiği kanıtları ve sınırlarını birlikte açı
 | Ölçüt (%20) | Projedeki karşılığı ve kanıt |
 |---|---|
 | Problem tanımı ve gerçek dünya uygunluğu | Kartlı ödeme yazılımlarında maskeleme, tutar ve idempotency gibi gerçekçi kontroller için mevzuat destekli ön inceleme. Çıktı uzman kararı veya uygunluk sertifikası değildir. |
-| Agentic mimari ve eğitim yaklaşımları | Yerel Ollama, BM25 tabanlı mevzuat RAG'i, Python araçları ve çok adımlı LangChain `Runnable` akışı. Depo, tarama, düzeltme, test ve PR farklı araç/izin adımlarıdır; tek bir LLM çağrısı yerine denetlenebilir orkestrasyon gerekir. Kalıcı hafıza, otonom planlayıcı ve çoklu agent yoktur. |
-| İşlevsellik ve çıktı kalitesi | Kurulum, tarama ve rapor akışları ile 56 otomatik test gösterilir. Canlı model denemesi bir dosyada doğrulanmış bulgu üretmedi; pozitif bulgular ve remediation kanıtları sentetik E2E fixture'larına aittir. |
+| Agentic mimari ve eğitim yaklaşımları | Yerel Ollama'nın sınırlı araç döngüsünde `mevzuat_ara` ve `dosya_oku` araçlarını seçmesi, hibrit BM25/embedding mevzuat RAG'i ve çok adımlı LangChain `Runnable` akışı. Kalıcı hafıza, otonom planlayıcı ve çoklu agent yoktur. |
+| İşlevsellik ve çıktı kalitesi | Kurulum, tarama ve rapor akışları ile 61 otomatik test gösterilir. Son canlı araç-döngüsü iki dosyayı taradı: `HomeController` için üretilen redirect bulgusu mevzuatla desteklenmedi; `PaymentController` bulgusu ise mevzuat alıntısı eşleşmediği için reddedildi. Ayrı, elle çapraz kontrol edilmiş kart verisi saklama bulgu adayı dokümante edilmiştir; hukukî sonuç uzman incelemesi gerektirir. |
 | Kod kalitesi ve teknik uygulama | Modüler Python araçları, ayrı iş akışı ve testler; yerel Ollama kullanımı bulut LLM API anahtarı gerektirmez. |
 | Dokümantasyon ve teslim | README'de proje amacı, teknoloji, kurulum ve çalıştırma adımları; sunumda terminal ve rapor ekran görüntüleri bulunur. |
 
@@ -300,9 +340,12 @@ eşleme, uygulamanın gösterdiği kanıtları ve sınırlarını birlikte açı
 
 28 slaytlık Türkçe sunum; problem tanımını, mimariyi, kurulum ve kullanım
 adımlarını, terminal çıktıları ile tarama/remediation rapor görsellerini ve
-rubrik eşlemesini içerir. Canlı Gemma taramasında bir dosya incelenmiş,
-doğrulanmış bulgu üretilmemiştir; sentetik bulgular, remediation testi ve PR
-provası ayrı test E2E'sidir. Sentetik kod farkı hukukî tespit değildir; PR yanıtı
+rubrik eşlemesini içerir. Son canlı `qwen3:4b` araç-döngüsü iki kaynak dosyayı
+inceledi; Madde 25'i ilgisiz bir yönlendirme satırına bağlayan model bulgusu
+hukuken doğrulanmadı ve diğer dosyadaki bulgu alıntı eşleşmesi başarısız olduğu
+için reddedildi. Elle çapraz kontrol edilen kart verisi saklama
+bulgu adayı [burada](docs/examples/kart_verisi_saklama_inceleme.md) açıklanır;
+hukukî sonuç değildir. Sentetik kod farkı hukukî tespit değildir; PR yanıtı
 yerel bare remote ve mock `gh` ile doğrulanmış, gerçek GitHub PR'ı açılmamıştır.
 
 - [MevzuatAgent_Odev_Sunumu_TR.pptx](docs/MevzuatAgent_Odev_Sunumu_TR.pptx)
@@ -316,19 +359,15 @@ yerel bare remote ve mock `gh` ile doğrulanmış, gerçek GitHub PR'ı açılma
 
 **Ekran görüntüleri (sentetik E2E örnekleri):**
 
-uçtan uca tarama HTML raporu](docs/assets/e2e_reports/scan_report_preview.png)
+![Uçtan uca tarama HTML raporu](docs/assets/e2e_reports/scan_report_preview.png)
 
-remediation HTML raporu ve kod farkı](docs/assets/e2e_reports/remediation_report_preview.png)
+![Remediation HTML raporu ve kod farkı](docs/assets/e2e_reports/remediation_report_preview.png)
 
 Adım adım terminal kanıtları [`docs/assets/e2e_terminal/`](docs/assets/e2e_terminal/)
 dizinindedir. Bu ekran görüntüleri sentetik test verisini gösterir; canlı model
 bulgusu veya gerçek mevzuat ihlali değildir.
 - [Remediation kod farkı](docs/examples/e2e_remediation_raporu.md)
 - [Test ve PR provasının doğrulama özeti](docs/examples/e2e_dogrulama_ozeti.md)
-
-Sunum, konuşmada verilen dokuz gereksinime dayanır. Ekli PDF dosyası bu çalışma
-ortamında yalnızca genel bir PDF simgesi olarak göründüğünden içindeki rubrik
-doğrulanamamıştır; PDF şartlarıyla birebir eşleştirme yapıldığı iddia edilmez.
 
 ## Yapılandırma dosyaları
 
@@ -593,12 +632,10 @@ GitHub'da gerçek bir değişiklik oluşturur.
 .venv/bin/python -m pytest -q
 ```
 
-Testler için Ollama servisi veya gerçek GitHub bağlantısı gerekmez. Demo
-depoları uygulama kaynak deposuna eklenmez; `data/` yerel ve yoksayılan çalışma
-verisidir. İsteğe bağlı sentetik demolar, herkese açık
-[mevzuatagent-test-fixtures](https://github.com/mehmetdenizersoy-code/mevzuatagent-test-fixtures)
-deposundadır. Bu depodaki `demo1` ve `demo2` yalnızca test içindir; toplam on
-bulgu gerçek mevzuat tespiti veya hukukî görüş değildir.
+Testler için Ollama servisi veya gerçek GitHub bağlantısı gerekmez. İki
+sentetik demo fixture'ı `tests/fixtures/synthetic_demo_repositories/` altında
+değişiklik geçmişine dahildir; toplam on test bulgusu gerçek mevzuat tespiti
+veya hukukî görüş değildir.
 
 ## Dizin yapısı
 
@@ -643,8 +680,8 @@ bulgu gerçek mevzuat tespiti veya hukukî görüş değildir.
 
 ## Bilinen sınırlamalar ve sonraki geliştirmeler
 
-- Mevzuat araması BM25 anahtar kelime tabanlıdır; embedding/vektör araması,
-  OCR ve belge sürüm takibi yoktur.
+- Embedding extra kurulmadığında mevzuat araması BM25 ile çalışır. OCR ve belge
+  sürüm takibi yoktur.
 - Model taraması kısmi olabilir; küçük yerel modeller yanlış/eksik çıktı
   verebilir. Kanıt doğrulaması model hatalarını azaltır ama hukuki doğruluğu
   garanti etmez.

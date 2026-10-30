@@ -366,7 +366,7 @@ eşleme, uygulamanın gösterdiği kanıtları ve sınırlarını birlikte açı
 | Agentic mimari ve eğitim yaklaşımları | Yerel Ollama'nın sınırlı araç döngüsünde `mevzuat_ara` ve `dosya_oku` araçlarını seçmesi, hibrit BM25/embedding mevzuat RAG'i ve çok adımlı LangChain `Runnable` akışı. Kalıcı hafıza, otonom planlayıcı ve çoklu agent yoktur. |
 | İşlevsellik ve çıktı kalitesi | Depo taraması, kod kanıtı doğrulama ve Markdown/HTML raporlama akışları ile 73 otomatik test. Gerçek model çıktıları uzman incelemesi olmadan hukukî sonuç sayılmaz. |
 | Kod kalitesi ve teknik uygulama | Modüler Python araçları, ayrı iş akışı ve testler; yerel Ollama kullanımı bulut LLM API anahtarı gerektirmez. |
-| Dokümantasyon ve teslim | README'de proje amacı, teknoloji, kurulum ve çalıştırma adımları açıklanır. Gerçek depo çalıştırmasından alınacak terminal ve HTML rapor ekran görüntüleri sonradan eklenecektir. |
+| Dokümantasyon ve teslim | README'de proje amacı, teknoloji, kurulum ve çalıştırma adımları açıklanır. Gerçek depo çalıştırmasından alınan terminal ve HTML rapor ekran görüntüleri eklenmiştir. |
 
 ## Yapılandırma dosyaları
 

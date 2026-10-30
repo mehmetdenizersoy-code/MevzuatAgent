@@ -17,19 +17,19 @@ adımları ayrı ve kullanıcı onayına bağlıdır.
 - [Proje durumu](#proje-durumu)
 - [İş akışı](#iş-akışı)
 - [Bileşenler](#bileşenler)
+- [Kullanılan teknikler](#kullanılan-teknikler)
 - [Sistem gereksinimleri](#sistem-gereksinimleri)
 - [Kurulum](#kurulum)
 - [Hızlı yerel test](#hızlı-yerel-test)
 - [İlk çalıştırma](#ilk-çalıştırma)
 - [Ödev rubriğiyle eşleşme](#ödev-rubriğiyle-eşleşme)
-- [Ödev sunumu](#ödev-sunumu)
 - [Yapılandırma dosyaları](#yapılandırma-dosyaları)
 - [Belgeleri indirme ve RAG indeksi oluşturma](#belgeleri-indirme-ve-rag-indeksi-oluşturma)
 - [Depo klonlama](#depo-klonlama)
 - [Model havuzu ve tarama tahmini](#model-havuzu-ve-tarama-tahmini)
 - [Onaylı tarama iş akışını çalıştırma](#onaylı-tarama-iş-akışını-çalıştırma)
 - [Raporlar](#raporlar)
-- [Remediation ve test](#remediation-ve-test)
+- [Remediation ve raporlar](#remediation-ve-raporlar)
 - [Testleri çalıştırma](#testleri-çalıştırma)
 - [Dizin yapısı](#dizin-yapısı)
 - [Güvenlik ve gizlilik](#güvenlik-ve-gizlilik)
@@ -57,12 +57,12 @@ adımlarını başlatır. Masaüstü/web arayüzü veya kalıcı sohbet ajanı d
 | Açık onayla izole worktree'de verilen düzeltmeyi uygulama | Araçta uygulandı |
 | Türkçe terminal menüsüyle temel adımları çalıştırma | Uygulandı |
 | En önemli iki bulgu için yerel Ollama düzeltme önerisi | Uygulandı; öneri kullanıcıya gösterilir |
-| İzole remediation dalında açık onayla test çalıştırma | `pytest`, `unittest`, `dotnet`, `maven`, `gradle`, `npm` için uygulandı |
-| Test başarılıysa son onayla GitHub PR oluşturma | Uygulandı; `gh` ve yetkili remote gerekir |
+| Onaylı remediation değişikliğini ayrı worktree'de uygulama | Uygulandı |
+| Markdown ve HTML diff raporu oluşturma | Uygulandı; `MEVZUAT_AGENT_REPORTS_DIR` ile özelleştirilebilen kullanıcı rapor dizinine kaydedilir |
 | Düzeltmenin hukuki doğruluğunu otomatik kanıtlama | Uygulanmadı; uzman incelemesi gerekir |
 
-Menü, kullanıcı onaylarını ayrı aşamalarda ister. Bir onay; sonraki test,
-commit veya GitHub işlemlerine otomatik olarak aktarılmaz.
+Menü, kod değişikliği için açık kullanıcı onayı ister. Onaydan sonra diff
+raporları üretilir ve etkileşimli remediation akışı burada tamamlanır.
 
 ## İş akışı
 
@@ -86,8 +86,8 @@ commit veya GitHub işlemlerine otomatik olarak aktarılmaz.
    kanıtı ve mevzuat sayfa/kaynak atfı doğrulanmayan bulgular elenir.
 8. Tarama JSON'u, Markdown ve HTML raporları üretilir. Bulgu varsa en yüksek
    öncelikli iki bulgu için öneri planı oluşturulur.
-9. Kod değiştirme, test çalıştırma ve PR oluşturma ayrı işlemlerdir. Bunlar
-   tarama onayıyla otomatik olarak onaylanmış sayılmaz.
+9. Kullanıcı onaylı düzeltme ayrı worktree'de uygulanır; Markdown ve HTML
+   diff raporları kullanıcı rapor dizinine kaydedilir ve akış sona erer.
 
 ## Bileşenler
 
@@ -104,11 +104,24 @@ commit veya GitHub işlemlerine otomatik olarak aktarılmaz.
 | `src/mevzuat_agent/tools/prepare_remediation_plan.py` | En fazla iki bulgu için onay öncesi plan hazırlar. |
 | `src/mevzuat_agent/tools/propose_remediation.py` | İlgili dosyalar için Ollama'dan sınırlı değişiklik önerisi alır. |
 | `src/mevzuat_agent/tools/apply_remediation.py` | Onaylı içerikleri izole Git worktree ve dalına uygular, diff raporlar. |
-| `src/mevzuat_agent/tools/validate_remediation.py` | Açık onayla pytest/unittest/dotnet/maven/gradle/npm testlerini çalıştırır ve raporlar. |
-| `src/mevzuat_agent/tools/create_github_pr.py` | Testi geçen değişiklikleri son onayla GitHub'a gönderip PR açar. |
 | `src/mevzuat_agent/workflows/scan.py` | Tahmin, onay, tarama ve raporlamayı LangChain `Runnable` zincirinde bağlar. |
 | `src/mevzuat_agent/console.py` | Türkçe etkileşimli menüyle belge, klonlama, tarama ve remediation adımlarını sunar. |
 | `src/mevzuat_agent/prompts/system_prompt_tr.md` | Ajanın Türkçe kapsam ve onay kurallarını saklar. |
+
+## Kullanılan teknikler
+
+| Teknoloji / yaklaşım | Projedeki kullanımı |
+|---|---|
+| Python 3.10+ | Uygulama, araçlar, raporlama ve testler. |
+| LangChain `Runnable` | Tahmin, kullanıcı onayı, tarama ve raporlamayı sıralı bir iş akışında orkestre eder. |
+| Ollama | Yerel dil modeli çıkarımı; tarama sırasında `mevzuat_ara` ve `dosya_oku` araç çağrıları, remediation sırasında sınırlı kod önerileri. |
+| RAG | Mevzuat PDF'lerini `pypdf` ile çıkarır, `RecursiveCharacterTextSplitter` ile kaynak/sayfa bilgisini koruyarak parçalara ayırır. |
+| BM25 | Mevzuat parçaları üzerinde anahtar kelime tabanlı geri getirme. |
+| Sentence Transformers | İsteğe bağlı çok dilli embedding modeliyle anlamsal geri getirme (`.[embeddings]` ekstra bağımlılığı). |
+| Reciprocal Rank Fusion (RRF) | BM25 ve embedding sonuç sıralamalarını hibrit aramada birleştirir. |
+| Kanıt doğrulama | Modelin kod satırı, mevzuat alıntısı, kaynak ve sayfa atıflarını rapora almadan önce doğrular. |
+| Git worktree | Onaylanan değişiklikleri kaynak çalışma ağacından ayrı tutar; Markdown/HTML diff raporu üretir. |
+| pytest | Birim ve entegrasyon testleri. |
 
 ## Sistem gereksinimleri
 
@@ -232,8 +245,8 @@ gösterilir. Bu durumda kod taraması kullanılamaz.
 git clone https://github.com/mehmetdenizersoy-code/MevzuatAgent.git ~/PycharmProjects/Final-Proje_MevzuatAgent
 ```
 
-İlk denemeyi sentetik `demo1`/`demo2` depolarıyla yapın; gerçek ödeme verisi
-içeren depo kullanmayın. macOS Terminal veya PyCharm Terminal'de:
+Gerçek bir Git deposu kullanın; üretim ödeme verisi veya sır içeren depolarda
+çalıştırmayın. macOS Terminal veya PyCharm Terminal'de:
 
 ```bash
 cd ~/PycharmProjects/Final-Proje_MevzuatAgent
@@ -252,10 +265,8 @@ yüklü değilse [resmi kurulumdan](https://ollama.com/download) yükleyip
 uygulamasını başlatın.
 
 Modelin kısa deneme yanıtı vermesi, tarama çıktısının geçerli veya hukuken
-doğru olacağını garanti etmez. Bu projede `llama3.2:1b` ile yapılan son gerçek
-tarama denemesi geçersiz JSON üretti. Bu yüzden tarama adımında model listesinden
-`gemma3:4b`'yi özellikle seçin; model yine hata verirse remediation'a geçmeyin.
-Tarama sadece kanıtı doğrulanmış bulgular üretirse sonraki adıma izin verir.
+doğru olacağını garanti etmez. Tarama yalnızca kanıtı doğrulanmış bulguları
+sonraki adıma taşır; model hatası varsa remediation'a geçmeyin.
 
 Uygulama basit bir sohbet olarak açılır. Mevzuat kapsamını listedeki numara,
 dosya adı veya `*` (tümü) ile sohbette seçin; ör. `1` ya da `1,2`. Ardından
@@ -265,34 +276,24 @@ kapatır. Sohbet yanıtları sistem promptuna ve güncel pipeline durumuna göre
 yerel Ollama modeliyle üretilir.
 
 Pipeline aşamasını doğrudan sohbet isteğiyle de başlatabilirsiniz: `RAG
-hazırla`, `depoları klonla`, `tarama yap`, `bulguları düzelt`. Her aşamadaki
-indirme, klonlama, tarama, dosya değiştirme ve PR onayları ayrıca alınır.
+hazırla`, `depoları klonla`, `tarama yap`, `bulguları düzelt`. İndirme,
+klonlama, tarama ve dosya değiştirme adımları ayrıca kullanıcı onayı ister.
 
-`tarama yap` isteğinde depo listesinde `[SENTETİK TEST]` olarak işaretlenen
-`data/test_repositories/demo1` veya `demo2` seçilirse beş önceden tanımlı bulgu
-ile JSON, Markdown, HTML ve düzeltme planı oluşturulur. Bu deterministik demo
-Ollama çağırmaz; rapor gerçek mevzuat tespiti değildir. Normal `data/repositories`
-altındaki bir `demo1`/`demo2` taraması bulgusuz veya hatalı sonuçlanırsa uygulama
-ayrı bir sentetik örnek rapor üretmeyi teklif eder. Kabul edilirse bu rapor
-gerçek tarama veya remediation girdisi olarak kullanılmaz.
-Örnek çıktı: [Markdown raporu](docs/examples/sentetik_demo1_tarama.md) |
-[HTML raporu](docs/examples/sentetik_demo1_tarama.html).
+Gerçek taramada tahmin ekranında taramayı onaylayın ve model listesinden uygun
+bir yerel modeli seçin. Model hatası veya sıfır doğrulanmış bulgu varsa
+remediation başlamaz. Önerilen diff'i inceleyip yalnızca onayladığınız
+değişikliği uygulayın. Markdown ve HTML diff raporları, proje kökünde varsayılan
+olarak `data/reports/remediation/` olan kullanıcı rapor dizinine kaydedilir;
+akış raporlar oluşturulduktan sonra tamamlanır. Otomatik test, commit, push
+adımı yoktur.
 
-Gerçek taramada tahmin ekranında taramayı onaylayın ve model sorusuna
-`gemma3:4b` yazın. Model hatası veya sıfır doğrulanmış bulgu varsa gerçek
-remediation başlamaz. Remediation diff'ini inceleyin ve yalnızca onayladığınız
-değişikliği uygulayın; testleri ayrıca onaylayın. İlk denemede PR açma sorusuna
-`hayır` deyin: bu adım gerçek GitHub commit/push işlemi yapar.
+Uygulama son tarama raporundaki depo kökünü ve tarama JSON yolunu otomatik
+bulur; bu yolları elle yazmanız gerekmez. Son taramadaki bulgular için geçerli
+bir depo yolu bulunamazsa depoyu yeniden klonlayıp tarayın.
 
-Remediation'ı daha sonra sürdürmek için `m` → `4` seçebilirsiniz. Uygulama son
-tarama raporundaki depo kökünü ve tarama JSON yolunu otomatik bulur; bu yolları
-elle yazmanız gerekmez. Son taramadaki bulgular için geçerli bir depo yolu
-bulunamazsa yeniden klonlayıp tarayın.
-
-Raporlar `data/reports/scans/` ve `data/reports/remediation/` altında oluşur.
-Kurulum, tarama ve remediation adımlarının örnek E2E çıktıları
-[burada](docs/examples/e2e_dogrulama_ozeti.md) bulunur; E2E çıktıları
-deterministik/mock testtir, gerçek model veya gerçek mevzuat tespiti değildir.
+Tarama raporları `data/reports/scans/`, remediation raporları ise
+`MEVZUAT_AGENT_REPORTS_DIR` ile belirtilen dizinde (varsayılan:
+`data/reports/remediation/`) oluşur.
 
 ## İlk çalıştırma
 
@@ -313,15 +314,12 @@ python -m mevzuat_agent
 Sohbette mevzuat kapsamını seçtikten sonra doğal dille proje hakkında
 konuşabilir ve `devam` yazarak önerilen pipeline aşamasını çalıştırabilirsiniz.
 Tarama sonunda doğrulanmış bulgu varsa uygulama aynı depo ve tarama raporuyla
-remediation'a geçmek için ayrıca onay ister. Gerçek tarama bulgusuz kalırsa
-remediation durdurulur; `demo1`/`demo2` için yalnızca ayrı, açıkça sentetik
-olarak işaretlenmiş bir örnek rapor seçeneği sunulur.
+remediation'a geçmek için ayrıca onay ister. Bulgu yoksa remediation başlatılmaz.
 
 Remediation seçeneği, tarama JSON dosyasından en öncelikli iki bulguyu seçer;
-Ollama önerisinin diff'ini gösterir. Kod değişikliği, test çalıştırma ve
-GitHub PR için birbirinden ayrı onaylar ister. PR aşaması gerçek commit ve
-push yapar; bunu yalnızca doğru Git deposunu seçtiğinizden emin olduktan sonra
-onaylayın.
+Ollama önerisinin diff'ini gösterir. Yalnızca kod değişikliği için onay ister.
+Değişiklik ayrı worktree'de uygulanır, Markdown ve HTML raporları kullanıcı
+rapor dizinine kaydedilir ve etkileşimli akış burada biter.
 
 ## Ödev rubriğiyle eşleşme
 
@@ -332,42 +330,9 @@ eşleme, uygulamanın gösterdiği kanıtları ve sınırlarını birlikte açı
 |---|---|
 | Problem tanımı ve gerçek dünya uygunluğu | Kartlı ödeme yazılımlarında maskeleme, tutar ve idempotency gibi gerçekçi kontroller için mevzuat destekli ön inceleme. Çıktı uzman kararı veya uygunluk sertifikası değildir. |
 | Agentic mimari ve eğitim yaklaşımları | Yerel Ollama'nın sınırlı araç döngüsünde `mevzuat_ara` ve `dosya_oku` araçlarını seçmesi, hibrit BM25/embedding mevzuat RAG'i ve çok adımlı LangChain `Runnable` akışı. Kalıcı hafıza, otonom planlayıcı ve çoklu agent yoktur. |
-| İşlevsellik ve çıktı kalitesi | Kurulum, tarama ve rapor akışları ile 61 otomatik test gösterilir. Son canlı araç-döngüsü iki dosyayı taradı: `HomeController` için üretilen redirect bulgusu mevzuatla desteklenmedi; `PaymentController` bulgusu ise mevzuat alıntısı eşleşmediği için reddedildi. Ayrı, elle çapraz kontrol edilmiş kart verisi saklama bulgu adayı dokümante edilmiştir; hukukî sonuç uzman incelemesi gerektirir. |
+| İşlevsellik ve çıktı kalitesi | Depo taraması, kod kanıtı doğrulama ve Markdown/HTML raporlama akışları ile 61 otomatik test. Gerçek model çıktıları uzman incelemesi olmadan hukukî sonuç sayılmaz. |
 | Kod kalitesi ve teknik uygulama | Modüler Python araçları, ayrı iş akışı ve testler; yerel Ollama kullanımı bulut LLM API anahtarı gerektirmez. |
-| Dokümantasyon ve teslim | README'de proje amacı, teknoloji, kurulum ve çalıştırma adımları; sunumda terminal ve rapor ekran görüntüleri bulunur. |
-
-## Ödev sunumu
-
-28 slaytlık Türkçe sunum; problem tanımını, mimariyi, kurulum ve kullanım
-adımlarını, terminal çıktıları ile tarama/remediation rapor görsellerini ve
-rubrik eşlemesini içerir. Son canlı `qwen3:4b` araç-döngüsü iki kaynak dosyayı
-inceledi; Madde 25'i ilgisiz bir yönlendirme satırına bağlayan model bulgusu
-hukuken doğrulanmadı ve diğer dosyadaki bulgu alıntı eşleşmesi başarısız olduğu
-için reddedildi. Elle çapraz kontrol edilen kart verisi saklama
-bulgu adayı [burada](docs/examples/kart_verisi_saklama_inceleme.md) açıklanır;
-hukukî sonuç değildir. Sentetik kod farkı hukukî tespit değildir; PR yanıtı
-yerel bare remote ve mock `gh` ile doğrulanmış, gerçek GitHub PR'ı açılmamıştır.
-
-- [MevzuatAgent_Odev_Sunumu_TR.pptx](docs/MevzuatAgent_Odev_Sunumu_TR.pptx)
-- Kaynak üretici: `scripts/create_presentation.py`
-- Terminal görselleri: `docs/assets/e2e_terminal/`
-- Görselleri üretmek için: `.venv/bin/python scripts/create_terminal_evidence.py`
-- HTML rapor görselleri: `docs/assets/e2e_reports/`
-- Rapor görsellerini üretmek için: `.venv/bin/python scripts/create_report_previews.py`
-- Sunumu üretmek için: `.venv/bin/python scripts/create_presentation.py`
-- [Uçtan uca tarama raporu](docs/examples/e2e_tarama_raporu.md)
-
-**Ekran görüntüleri (sentetik E2E örnekleri):**
-
-![Uçtan uca tarama HTML raporu](docs/assets/e2e_reports/scan_report_preview.png)
-
-![Remediation HTML raporu ve kod farkı](docs/assets/e2e_reports/remediation_report_preview.png)
-
-Adım adım terminal kanıtları [`docs/assets/e2e_terminal/`](docs/assets/e2e_terminal/)
-dizinindedir. Bu ekran görüntüleri sentetik test verisini gösterir; canlı model
-bulgusu veya gerçek mevzuat ihlali değildir.
-- [Remediation kod farkı](docs/examples/e2e_remediation_raporu.md)
-- [Test ve PR provasının doğrulama özeti](docs/examples/e2e_dogrulama_ozeti.md)
+| Dokümantasyon ve teslim | README'de proje amacı, teknoloji, kurulum ve çalıştırma adımları açıklanır. Gerçek depo çalıştırmasından alınacak terminal ve HTML rapor ekran görüntüleri sonradan eklenecektir. |
 
 ## Yapılandırma dosyaları
 
@@ -496,7 +461,7 @@ modeller ve en hızlı öneri için:
 from mevzuat_agent.tools.estimate_scan_cost import estimate_scan_cost_for_model_pool
 
 estimate = estimate_scan_cost_for_model_pool(
-    ["data/repositories/demo1"],
+    ["data/repositories/your-repository"],
     rag_index_path="data/legislation/rag/chunks.jsonl",
     max_files=5,
 )
@@ -535,7 +500,7 @@ def tarama_onayi(istek):
     return secim.strip() or None
 
 sonuc = run_scan_workflow(
-    ["data/repositories/demo1"],
+    ["data/repositories/your-repository"],
     max_files=5,
     rag_index_path="data/legislation/rag/chunks.jsonl",
     output_dir="data/reports/scans",
@@ -552,8 +517,7 @@ for depo in sonuc.repositories:
 
 Örneği `ornek_tarama.py` gibi bir Python dosyasına kaydedip proje sanal
 ortamında çalıştırabilirsiniz. Callback yalnızca model seçimini ve tarama
-onayını temsil eder. Düzeltme uygulama, test çalıştırma veya PR oluşturma
-onayı vermez. İş akışı mevcut, yerel Git depolarını ve önceden hazırlanmış
+onayını temsil eder; kod değişikliği onayı vermez. İş akışı mevcut, yerel Git depolarını ve önceden hazırlanmış
 RAG indeksini bekler.
 
 ## Raporlar
@@ -567,42 +531,12 @@ kod kanıtı, mevzuat kaynağı ve sınırlamalar yer alır. Bulgu çıkmaması
 uyumluluğun kanıtlandığı anlamına gelmez. HTML raporu kullanıcı/kod kaynaklı
 değerleri HTML olarak kaçışlayarak yazar.
 
-Canlı yerel model çalıştırmasının [JSON](docs/examples/gercek_tarama_raporu.json),
-[Markdown](docs/examples/gercek_tarama_raporu.md) ve
-[HTML](docs/examples/gercek_tarama_raporu.html) çıktıları da eklenmiştir. Rapor,
-`data/repositories/demo1` deposunun `203506d` commit'inde 59 kaynak dosyasından
-ilk ikisini `qwen3:4b` ile tarar; tam depo incelemesi değildir. Gerçek model
-çıktısı uzman tarafından doğrulanmamıştır: yorum satırına dayanan, güven puanı
-1/10 olan muhtemel bir yanlış pozitif kritik bulgu içerir ve diğer dosyadaki
-bir bulgu kanıt doğrulamasından geçmemiştir. Bu örnek doğrulanmış mevzuat ihlali
-olarak yorumlanmamalı; model sınırlamalarını da gösterir.
+Gerçek depo çalıştırmasından alınan terminal ekran görüntüleri ve raporların
+HTML görselleri, canlı tarama tamamlandıktan sonra bu bölüme eklenecektir.
+Ödeme alanındaki bir kod örneği tek başına mevzuat bulgusu sayılmaz; ilgili
+mevzuat metni ve kod kanıtı uzman tarafından doğrulanmalıdır.
 
-Sunum ve dokümantasyonda rapor biçimini göstermek için sentetik örnekler:
-
-- [Örnek HTML tarama raporu](docs/examples/ornek_tarama_raporu.html) —
-  kartlı ödeme kodu için iki temsili bulgu; `TEST_FIXTURE_NOT_LAW` gerçek mevzuat
-  atfı olmadığını belirtir.
-- [Örnek HTML remediation raporu](docs/examples/ornek_remediation_raporu.html) —
-  izole düzeltme dalına ait temsili diff görünümü.
-- [Uçtan uca doğrulama özeti](docs/examples/e2e_dogrulama_ozeti.md) —
-  RAG, tahmin, tarama, remediation, test ve yerel PR provasının sonuçları.
-- [Uçtan uca tarama raporu](docs/examples/e2e_tarama_raporu.html),
-  [remediation diff raporu](docs/examples/e2e_remediation_raporu.html) ve
-  [test raporu](docs/examples/e2e_test_raporu.html).
-
-Örnekler yalnız rapor biçimini gösterir; gerçek tarama, hukuki görüş, test
-başarısı veya PR sonucu değildir. Ödeme alanındaki maskeleme, idempotency,
-tutar/para birimi ve mutabakat başlıkları da tek başına mevzuat bulgusu sayılmaz;
-ilgili mevzuat metni ile kod kanıtı uzman tarafından doğrulanmalıdır.
-
-E2E raporları deterministik test kanıtıdır: tarama LLM yanıtı mock'tur,
-bulgular sentetiktir, Git push yalnızca geçici yerel bare remote'a yapılmıştır
-ve GitHub PR çağrısı mock'lanmıştır. Gerçek Ollama model kalitesini veya
-hukuki uygunluğu doğrulamaz. Ayrı gerçek `llama3.2:1b` tarama denemesi eksik
-JSON ürettiği için dosya taraması tamamlanmadı; bu durumda uygulama remediation
-aşamasına geçmedi.
-
-## Remediation ve test
+## Remediation ve raporlar
 
 `prepare_remediation_plan` yalnızca plan oluşturur; kendi başına kod
 değiştirmez. `apply_remediation` ayrı, açık `user_approved=True` onayı ister.
@@ -610,21 +544,26 @@ Yalnızca en öncelikli iki bulguyla eşleşen dosyaları değiştirir. Kaynak
 deponun Git çalışma ağacının temiz olmasını, bulgu kanıtının kaynak satırda
 bulunmasını ve verilen metin değişikliklerinin bu dosyalarla sınırlı olmasını
 kontrol eder. Değişikliği ayrı bir `mevzuatagent/remediation-*` dalı ve
-worktree içinde uygular; kaynak dalı değiştirmez. Otomatik commit veya PR
-oluşturmaz.
+worktree içinde uygular; kaynak dalı değiştirmez ve otomatik commit oluşturmaz.
 
-`validate_remediation` test kodunu çalıştırdığı için ayrıca açık onay ister.
-Sabit komutlarla `pytest`, `unittest`, `dotnet test`, `mvn test`, `gradle test`
-ve `npm test` araçlarını destekler; proje manifestine uygun aracı seçer.
-Remediation dalı dışında çalışmayı reddeder ve zaman aşımı uygular. Test
-kodunun güvenilir olduğundan emin olun. Test sonucu Markdown ve HTML olarak
-raporlanır; başarısızlık veya zaman aşımı başarılı gibi gösterilmez.
+Onaylı değişiklik için Markdown ve HTML diff raporları, varsayılan olarak
+`data/reports/remediation/` dizinine yazılır; etkileşimli akış raporlar
+oluşturulduktan sonra tamamlanır. Başka bir kullanıcı rapor dizini seçmek için
+`MEVZUAT_AGENT_REPORTS_DIR` ortam değişkenini mutlak veya göreli bir yola
+ayarlayın. macOS/Linux örneği:
 
-Test başarılıysa ve kullanıcı son kez açıkça onaylarsa `create_github_pr`
-yalnızca belirtilen değişiklik dosyalarını commit eder, remediation dalını
-`origin`'e gönderir ve GitHub CLI ile PR oluşturur. GitHub CLI (`gh`) kurulu,
-kimliği doğrulanmış ve remote yazma yetkisi verilmiş olmalıdır. Bu aşama
-GitHub'da gerçek bir değişiklik oluşturur.
+```bash
+export MEVZUAT_AGENT_REPORTS_DIR="$HOME/Documents/MevzuatAgent-Raporlar"
+```
+
+PowerShell örneği:
+
+```powershell
+$env:MEVZUAT_AGENT_REPORTS_DIR = "$HOME\Documents\MevzuatAgent-Raporlar"
+```
+
+Kaynak depo değiştirilmez; etkileşimli akış raporlar oluşturulduktan sonra
+tamamlanır ve ek bir otomatik adım çalıştırmaz.
 
 ## Testleri çalıştırma
 
@@ -632,10 +571,8 @@ GitHub'da gerçek bir değişiklik oluşturur.
 .venv/bin/python -m pytest -q
 ```
 
-Testler için Ollama servisi veya gerçek GitHub bağlantısı gerekmez. İki
-sentetik demo fixture'ı `tests/fixtures/synthetic_demo_repositories/` altında
-değişiklik geçmişine dahildir; toplam on test bulgusu gerçek mevzuat tespiti
-veya hukukî görüş değildir.
+Testler için Ollama servisi veya gerçek GitHub bağlantısı gerekmez. Testler
+depo içindeki yerel fixture'ları kullanır; bunlar canlı tarama raporu değildir.
 
 ## Dizin yapısı
 
@@ -654,8 +591,7 @@ veya hukukî görüş değildir.
 └── data/
     ├── legislation/                # İndirilen PDF ve RAG indeksi
     ├── repositories/               # Onayla klonlanan çalışma depoları
-    ├── reports/                    # Tarama ve remediation raporları
-    └── test_repositories/          # Sentetik test depoları
+    └── reports/                    # Tarama ve remediation raporları
 ```
 
 ## Güvenlik ve gizlilik
@@ -664,8 +600,7 @@ veya hukukî görüş değildir.
   servisine gönderilir; bulut LLM servisine geçiş yapılandırılmamıştır.
 - Uygulama gerçek kart sahibi verisini otomatik maskelediğini garanti etmez.
   Üretim PAN/CVV/PIN, kimlik bilgisi veya sır içeren depolarda taramayı
-  başlatmayın; mümkünse sentetik ya da hassas veriden arındırılmış test deposu
-  kullanın.
+  başlatmayın; test için hassas veriden arındırılmış bir depo kullanın.
 - GitHub'dan depo klonlamak ağ bağlantısı kullanır ve açık onay ister.
 - İndirilen PDF'ler yerel diskte tutulur; bu verilerin güncelliği ve kullanım
   hakkı kullanıcı tarafından doğrulanmalıdır.
@@ -676,7 +611,6 @@ veya hukukî görüş değildir.
   güvendiğiniz projelerde kullanın.
 - Gerçek depo üzerinde remediation denemeden önce yedek alın ve temiz bir Git
   çalışma ağacıyla çalışın.
-- Sentetik fixture raporları gerçek hukukî veya güvenlik bulgusu değildir.
 
 ## Bilinen sınırlamalar ve sonraki geliştirmeler
 

@@ -1705,7 +1705,7 @@ def test_scan_result_offers_remediation_with_repository_and_scan_path(tmp_path, 
     monkeypatch.setattr(console, "_ask_yes", lambda question: True)
     monkeypatch.setattr(
         console,
-        "_remediate_and_pr",
+        "_remediate",
         lambda repo, path: observed.update(repository=repo, scan_path=path),
     )
 
@@ -1745,7 +1745,7 @@ def test_scan_result_without_findings_explains_model_error_and_skips_remediation
     )
     monkeypatch.setattr(
         console,
-        "_remediate_and_pr",
+        "_remediate",
         lambda *args: pytest.fail("Bulgu yokken remediation başlatılmamalı."),
     )
 
@@ -1818,7 +1818,7 @@ def test_remediation_stops_when_scan_has_no_findings(tmp_path, monkeypatch, caps
         "mevzuat_agent.console.propose_remediation",
         side_effect=AssertionError("Bulgu yokken model çağrılmamalı."),
     ) as propose:
-        console._remediate_and_pr(tmp_path, scan_path)
+        console._remediate(tmp_path, scan_path)
 
     propose.assert_not_called()
     assert "doğrulanmış bulgu olmadığından" in capsys.readouterr().out
@@ -1923,10 +1923,12 @@ def test_synthetic_fixture_scan_generates_findings_and_reports(
     assert "Sentetik test bulguları üretildi" in capsys.readouterr().out
 
 
-def test_remediation_automatically_uses_latest_scan_repository(
+def test_remediation_applies_and_reports_latest_scan_without_test_or_pr_followup(
     tmp_path, monkeypatch, capsys
 ):
     monkeypatch.setattr(console, "_ROOT", tmp_path)
+    user_reports_dir = tmp_path / "user-reports"
+    monkeypatch.setenv("MEVZUAT_AGENT_REPORTS_DIR", str(user_reports_dir))
     repository = tmp_path / "data/repositories/demo"
     repository.mkdir(parents=True)
     _run_git(repository, "init", "-b", "main")
@@ -1944,12 +1946,24 @@ def test_remediation_automatically_uses_latest_scan_repository(
             {
                 "repository": str(repository),
                 "model": "test-model",
-                "findings": [{"title": "Synthetic"}],
+                "findings": [
+                    {
+                        "severity": "HIGH",
+                        "confidence": 9,
+                        "file": "rules.py",
+                        "line": 2,
+                        "evidence": "    return False",
+                        "title": "Check result",
+                        "recommendation": "Return success.",
+                        "mevzuat_source": "TEST_FIXTURE_NOT_LAW",
+                    }
+                ],
             }
         ),
         encoding="utf-8",
     )
     observed = {}
+    prompts = []
     with (
         patch(
             "mevzuat_agent.console.propose_remediation",
@@ -1958,16 +1972,31 @@ def test_remediation_automatically_uses_latest_scan_repository(
             )
             or {"rules.py": "def check():\n    return True\n"},
         ),
-        patch("mevzuat_agent.console._ask_yes", return_value=False),
+        patch(
+            "mevzuat_agent.console._ask_yes",
+            side_effect=lambda prompt: prompts.append(prompt) or True,
+        ),
     ):
-        console._remediate_and_pr()
+        console._remediate()
 
     assert observed == {
         "repository": repository,
         "scan_path": scan_path,
         "model": "test-model",
     }
-    assert "Son tarama deposu otomatik bulundu" in capsys.readouterr().out
+    assert prompts == [
+        "Yukarıdaki kod değişikliklerini ayrı dalda uygulamayı onaylıyor musunuz?"
+    ]
+    markdown_reports = tuple(user_reports_dir.glob("remediation-*.md"))
+    html_reports = tuple(user_reports_dir.glob("remediation-*.html"))
+    assert len(markdown_reports) == len(html_reports) == 1
+    assert "return True" in markdown_reports[0].read_text(encoding="utf-8")
+    assert "return True" in html_reports[0].read_text(encoding="utf-8")
+    output = capsys.readouterr().out
+    assert "Son tarama deposu otomatik bulundu" in output
+    assert str(user_reports_dir) in output
+    assert "Remediation akışı raporlar oluşturulduktan sonra tamamlandı." in output
+    assert "PR" not in output
 
 
 def _workflow_test_pool(repository: Path) -> ModelPoolEstimate:

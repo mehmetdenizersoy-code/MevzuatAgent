@@ -15,7 +15,6 @@ from mevzuat_agent.prompt import load_system_prompt
 from mevzuat_agent.tools.apply_remediation import apply_remediation
 from mevzuat_agent.tools.build_mevzuat_rag import build_mevzuat_rag
 from mevzuat_agent.tools.clone_repositories import clone_repositories
-from mevzuat_agent.tools.create_github_pr import create_github_pr
 from mevzuat_agent.tools.download_mevzuat import download_mevzuat
 from mevzuat_agent.tools.estimate_scan_cost import (
     DEFAULT_OLLAMA_URL,
@@ -28,7 +27,6 @@ from mevzuat_agent.tools.prepare_remediation_plan import prepare_remediation_pla
 from mevzuat_agent.tools.propose_remediation import propose_remediation
 from mevzuat_agent.tools.scan_repository import run_git_command
 from mevzuat_agent.tools.validate_config import validate_config
-from mevzuat_agent.tools.validate_remediation import TestRunner, validate_remediation
 from mevzuat_agent.workflows.scan import (
     RepositoryScanArtifacts,
     ScanApprovalRequest,
@@ -289,7 +287,7 @@ def _run_pipeline_step(step: str) -> None:
         "1": _prepare_legislation,
         "2": _clone_repositories,
         "3": _scan_repository,
-        "4": _remediate_and_pr,
+        "4": _remediate,
     }
     actions[step]()
 
@@ -301,7 +299,7 @@ def _run_manual_menu() -> bool:
         "1. Mevzuat belgelerini indir ve RAG indeksini hazırla\n"
         "2. repo_link.json depolarını klonla\n"
         "3. Yerel depoda tarama/tahmin yap\n"
-        "4. Son taramadaki bulguları düzelt, test et ve onayla PR aç\n"
+        "4. Son taramadaki bulguları düzelt ve Markdown/HTML diff raporu oluştur\n"
         "5. Yapılandırmaları kontrol et\n"
         "0. Çıkış"
     )
@@ -310,7 +308,7 @@ def _run_manual_menu() -> bool:
         "1": _prepare_legislation,
         "2": _clone_repositories,
         "3": _scan_repository,
-        "4": _remediate_and_pr,
+        "4": _remediate,
         "5": _show_config,
     }
     if choice == "0":
@@ -599,7 +597,7 @@ def _offer_remediation(repository: Path, artifact: RepositoryScanArtifacts) -> N
             f"{len(artifact.scan.findings)} doğrulanmış bulgu var. "
             "Remediation adımına şimdi geçilsin mi?"
         ):
-            _remediate_and_pr(repository, artifact.scan.output_path)
+            _remediate(repository, artifact.scan.output_path)
         else:
             print("Remediation ertelendi. Menüden 4'ü seçerek sonra devam edebilirsiniz.")
         return
@@ -643,7 +641,7 @@ def _offer_deterministic_fixture(repository: Path) -> None:
         _run_synthetic_fixture_scan(fixture)
 
 
-def _remediate_and_pr(
+def _remediate(
     repository_path: Path | None = None,
     scan_result_path: Path | None = None,
 ) -> None:
@@ -698,65 +696,21 @@ def _remediate_and_pr(
         scan_path,
         changes,
         user_approved=True,
-        reports_dir=_ROOT / "data/reports/remediation",
+        reports_dir=_remediation_reports_dir(),
     )
     print(f"İzole dal: {application.branch}")
     print(f"Worktree: {application.worktree_path}")
     print(f"Diff raporu: {application.markdown_path}")
     print(f"Diff HTML: {application.html_path}")
-    if not _ask_yes("Bu worktree içindeki testleri çalıştırmayı onaylıyor musunuz?"):
-        print("Test çalıştırılmadı; PR açılamaz.")
-        return
+    print(f"Markdown ve HTML raporları kaydedildi: {application.markdown_path.parent}")
+    print("Remediation akışı raporlar oluşturulduktan sonra tamamlandı.")
 
-    runner = _select_test_runner(application.worktree_path)
-    if runner is None:
-        print("Bu depoda desteklenen test projesi tanınmadı; PR açılamaz.")
-        return
-    test_result = validate_remediation(
-        application.worktree_path,
-        user_approved=True,
-        runner=runner,
-        reports_dir=_ROOT / "data/reports/remediation",
-    )
-    print(f"Test durumu: {test_result.status}")
-    print(f"Test raporu: {test_result.markdown_path}")
-    print(f"Test HTML: {test_result.html_path}")
-    if test_result.status != "passed":
-        print("Testler başarıyla tamamlanmadı; PR açılmadı.")
-        return
 
-    if not _ask_yes(
-        "Test raporunu ve kod farkını incelediniz mi? Değişikliği GitHub'a gönderip PR açalım mı?"
-    ):
-        print("GitHub'a push yapılmadı ve PR açılmadı.")
-        return
-    findings = _top_findings(scan_result.get("findings", []))
-    title = "MevzuatAgent: " + (findings[0].get("title", "onaylı düzeltme")[:60])
-    body = "\n".join(
-        [
-            "## Özet",
-            "MevzuatAgent tarafından kullanıcı onayıyla hazırlanan düzeltme.",
-            "",
-            "## Sentetik veri uyarısı",
-            "Bu tarama `TEST_FIXTURE_NOT_LAW` içeriyorsa sentetik testtir; hukukî tespit değildir.",
-            "",
-            "## Doğrulama",
-            f"- Test sonucu: `{test_result.status}`",
-            f"- Test raporu (yerel): `{test_result.markdown_path}`",
-            f"- Düzeltme diff'i: `{application.markdown_path}`",
-        ]
-    )
-    base = input("Hedef GitHub dalı (boşsa origin varsayılan dalı): ").strip() or None
-    pull_request = create_github_pr(
-        application.worktree_path,
-        test_result,
-        tuple(changes),
-        user_approved=True,
-        title=title,
-        body=body,
-        base_branch=base,
-    )
-    print(f"PR oluşturuldu: {pull_request.url}")
+def _remediation_reports_dir() -> Path:
+    configured_dir = os.environ.get("MEVZUAT_AGENT_REPORTS_DIR", "").strip()
+    if configured_dir:
+        return Path(configured_dir).expanduser()
+    return _ROOT / "data/reports/remediation"
 
 
 def _select_repository() -> Path | None:
@@ -802,30 +756,6 @@ def _read_positive_integer(prompt: str, *, default: int | None = None) -> int:
     return number
 
 
-def _select_test_runner(worktree: Path) -> TestRunner | None:
-    options: list[TestRunner] = []
-    if any(worktree.glob("*.sln")) or any(worktree.glob("*.slnx")):
-        options.append("dotnet")
-    if (worktree / "pom.xml").is_file():
-        options.append("maven")
-    if any((worktree / name).is_file() for name in ("build.gradle", "build.gradle.kts")):
-        options.append("gradle")
-    if (worktree / "package.json").is_file():
-        options.append("npm")
-    if any(worktree.rglob("test_*.py")) or any(worktree.rglob("*_test.py")):
-        options.extend(("pytest", "unittest"))
-    if not options:
-        print("Desteklenen test tanımları bulunamadı.")
-        return None
-    print("Algılanan test araçları:")
-    for index, runner in enumerate(options, start=1):
-        print(f"{index}. {runner}")
-    choice = _read_positive_integer("Çalıştırılacak test aracı numarası: ")
-    if choice > len(options):
-        raise ValueError("Test aracı numarası listede yok.")
-    return options[choice - 1]
-
-
 def _ask_yes(question: str) -> bool:
     answer = input(f"{question} [e/H]: ").strip().casefold()
     return answer in {"e", "evet"}
@@ -837,14 +767,3 @@ def _starts_with_pdf(path: Path) -> bool:
             return document.read(5) == b"%PDF-"
     except OSError:
         return False
-
-
-def _top_findings(findings: list[dict]) -> list[dict]:
-    severity_order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
-    return sorted(
-        findings,
-        key=lambda item: (
-            severity_order.get(str(item.get("severity", "")).upper(), 4),
-            -int(item.get("confidence", 0)),
-        ),
-    )[:2]

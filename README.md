@@ -545,6 +545,12 @@ rapor görselleri daha sonra eklenecektir.
 
 ![MevzuatAgent başlangıç terminal akışının temsili görünümü](docs/images/startup-terminal-temsili.svg)
 
+Remediation akışına geçişin aşağıdaki temsili görünümü, paylaşılan terminal
+metninden hazırlanmıştır. Çıktı değişiklik önerisinin hazırlanma aşamasında
+sona erdiği için öneri, kullanıcı onayı veya remediation sonucu gösterilmez.
+
+![MevzuatAgent remediation hazırlığının temsili terminal görünümü](docs/images/remediation-baslangic-temsili.svg)
+
 Ödeme alanındaki bir kod örneği tek başına mevzuat bulgusu sayılmaz; ilgili
 mevzuat metni ve kod kanıtı uzman tarafından doğrulanmalıdır.
 

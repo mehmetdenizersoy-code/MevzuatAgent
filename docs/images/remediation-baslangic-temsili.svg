@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="510" viewBox="0 0 1400 510" role="img" aria-labelledby="title description">
+  <title id="title">MevzuatAgent remediation hazırlığının temsili terminal görünümü</title>
+  <desc id="description">Kullanıcının paylaştığı terminal metninden hazırlanmış örnek görünüm; remediation sonucu gösterilmemektedir.</desc>
+  <rect width="1400" height="510" rx="18" fill="#0b1220"/>
+  <path d="M18 0h1364a18 18 0 0 1 18 18v48H0V18A18 18 0 0 1 18 0Z" fill="#172033"/>
+  <circle cx="30" cy="33" r="7" fill="#ff5f57"/>
+  <circle cx="54" cy="33" r="7" fill="#febc2e"/>
+  <circle cx="78" cy="33" r="7" fill="#28c840"/>
+  <text x="700" y="39" text-anchor="middle" fill="#cbd5e1" font-family="Arial, sans-serif" font-size="16">MevzuatAgent — remediation hazırlığı</text>
+  <rect x="1132" y="17" width="240" height="32" rx="16" fill="#334155"/>
+  <text x="1252" y="38" text-anchor="middle" fill="#fbbf24" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1">TEMSİLİ GÖRÜNÜM</text>
+  <g font-family="Menlo, Monaco, Consolas, monospace" font-size="15" xml:space="preserve">
+    <text x="34" y="102" fill="#fbbf24">Mevzuat seçenekleri:</text>
+    <text x="34" y="130" fill="#cbd5e1">  1. 1.5.5464.pdf</text>
+    <text x="34" y="158" fill="#cbd5e1">  2. GeneratePdf</text>
+    <text x="34" y="186" fill="#94a3b8">Numara, virgülle ayrılmış numaralar veya * (tümü) yazın.</text>
+    <text x="34" y="214" fill="#94a3b8">Örnekler: '1', 'devam', 'tarama yap', 'yardım', 'çıkış'.</text>
+    <text x="34" y="252" fill="#a5b4fc">Siz: <tspan fill="#f8fafc">devam</tspan></text>
+    <text x="34" y="280" fill="#7dd3fc">Pipeline adımı: Son taramadaki en önemli bulguları remediation ile düzeltme</text>
+    <text x="34" y="318" fill="#cbd5e1">Son tarama deposu otomatik bulundu: /Users/denizersoy/PycharmProjects/Final-Proje_MevzuatAgent/data/repositories/demo1</text>
+    <text x="34" y="346" fill="#cbd5e1">Tarama sonucu: /Users/denizersoy/PycharmProjects/Final-Proje_MevzuatAgent/data/reports/scans/card_data_live_verification.json</text>
+    <text x="34" y="384" fill="#86efac">Ollama en önemli iki bulgu için değişiklik önerisi hazırlıyor.</text>
+  </g>
+  <path d="M34 412h1332" stroke="#263449"/>
+  <text x="34" y="444" fill="#94a3b8" font-family="Arial, sans-serif" font-size="13">Paylaşılan terminal metninden oluşturulmuş temsili görünüm; öneri ve remediation sonucu burada gösterilmemiştir.</text>
+</svg>
